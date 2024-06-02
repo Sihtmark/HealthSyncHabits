@@ -12,7 +12,7 @@ import SwiftData
 struct HealthSyncHabitsApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Habit.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -22,11 +22,13 @@ struct HealthSyncHabitsApp: App {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
+    @State private var vm = ViewModel()
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainList()
         }
         .modelContainer(sharedModelContainer)
+        .environment(vm)
     }
 }
