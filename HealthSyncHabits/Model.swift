@@ -5,21 +5,23 @@
 //  Created by sihtmark on 20.01.2024.
 //
 
-import Foundation
+import SwiftUI
 import SwiftData
 
 @Model
 final class Habit {
     let id = UUID().uuidString
     var name: String
-    var creationDate: Date
+    var creationDate: String
     var isArchived: Bool
     var countPerday: Int // сколько раз надо выполнить привычку за день в идеале
     var minCount: Int // минимальное кол-во раз за день для того чтобы засчитать привычку как выполненную
     var score: Int // сколько дней подряд выполнялась привычка без пропусков
-    var checkedInDays = [Day]()
+    @Relationship(deleteRule: .cascade, inverse: \DayStruct.habit)
+    var checkedInDays = [DayStruct]()
     
-    init(name: String, creationDate: Date, minCount: Int, count: Int) {
+    // Создание новой привычки
+    init(name: String, creationDate: String, minCount: Int, count: Int) {
         self.name = name
         self.creationDate = creationDate
         self.isArchived = false
@@ -30,14 +32,15 @@ final class Habit {
     
     init() {
         self.name = ""
-        self.creationDate = Date()
+        self.creationDate = Date().convertToString()
         self.isArchived = false
         self.countPerday = 1
         self.minCount = 1
         self.score = 0
     }
     
-    init(name: String, creationDate: Date, minCount: Int, count: Int, checkedInDays: [Day]) {
+    // для превью
+    init(name: String, creationDate: String, minCount: Int, count: Int, checkedInDays: [DayStruct]) {
         self.name = name
         self.creationDate = creationDate
         self.isArchived = false
@@ -46,26 +49,126 @@ final class Habit {
         self.score = 0
         self.checkedInDays = checkedInDays
     }
-}
-
-@Model
-final class Day {
-    let id = UUID().uuidString
-    var date: Date
-    var state: DayType
-    var count: Int
     
-    init(date: Date, state: DayType, count: Int) {
-        self.date = date
-        self.state = state
-        self.count = count
+    func todayScore() -> String {
+        let today = Date().convertToString()
+        if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
+            return "\(checkedInDays[index].count) / \(countPerday)"
+        }
+        return "0"
+    }
+    
+    func todayScoreColor() -> Color {
+        let today = Date().convertToString()
+        if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
+            let currentCount = checkedInDays[index].count
+            if currentCount < minCount {
+                return .red
+            } else if currentCount >= minCount && currentCount < countPerday {
+                return .yellow
+            } else if currentCount >= countPerday {
+                return .green
+            }
+        }
+        return .red
+    }
+    
+    func addRep() {
+        let today = Date().convertToString()
+        if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
+            checkedInDays[index].count += 1
+            if checkedInDays[index].count >= countPerday {
+                checkedInDays[index].state = "checked"
+            }
+        }
+    }
+    
+    func removeRep() {
+        let today = Date().convertToString()
+        if let index = checkedInDays.firstIndex(where: {$0.date == today}), checkedInDays[index].count > 0 {
+            checkedInDays[index].count -= 1
+            if checkedInDays[index].count < minCount {
+                checkedInDays[index].state = "unchecked"
+            }
+        }
+    }
+    
+    func skip() {
+        let today = Date().convertToString()
+        if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
+            checkedInDays[index].count = 0
+            checkedInDays[index].state = "skiped"
+        }
+    }
+    
+    func fail() {
+        let today = Date().convertToString()
+        if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
+            checkedInDays[index].count = 0
+            checkedInDays[index].state = "failed"
+        }
+    }
+    
+    func canAlreadyCheck() -> Bool {
+        let today = Date().convertToString()
+        if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
+            if checkedInDays[index].count >= minCount {
+                return true
+            }
+        }
+        return false
+    }
+    
+    func checkFromUnCheck() {
+        let today = Date().convertToString()
+        if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
+            checkedInDays[index].state = "checked"
+        }
+    }
+    
+    func uncheckFromSkiped() {
+        let today = Date().convertToString()
+        if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
+            checkedInDays[index].state = "unchecked"
+        }
+    }
+    
+    func AddRepAndReplace() {
+        let today = Date().convertToString()
+        if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
+            checkedInDays[index].count += 1
+            if checkedInDays[index].count >= countPerday {
+                checkedInDays[index].state = "checked"
+            } else {
+                checkedInDays[index].state = "unchecked"
+            }
+        }
     }
 }
 
+@Model
+final class DayStruct {
+    var date: String
+    var state: String
+    var count: Int
+    var habit: Habit?
+    
+    init(habit: Habit) {
+        self.date = Date().convertToString()
+        self.state = "unchecked"
+        self.count = 0
+        self.habit = habit
+    }
+    
+    init(day: String, habit: Habit) {
+        self.date = day
+        self.state = "unchecked"
+        self.count = 0
+        self.habit = habit
+    }
+}
 
-enum DayType: Codable {
-    case unchecked
-    case skiped
-    case failed
-    case checked
+struct Setings {
+    var day: String
+    var beginingTime: String
 }

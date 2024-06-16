@@ -13,39 +13,42 @@ struct NewHabitView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query var habits: [Habit]
-    @State var habit = Habit()
+    @State private var name = ""
+    @State private var pickerDate = Date()
+    @State private var maxCount = 0
+    @State private var minCount = 0
     
     var body: some View {
         List {
             Section {
-                TextField("Add your habit name here...", text: $habit.name)
+                TextField("Add your habit name here...", text: $name)
             } footer: {
-                if habits.contains(where: {$0.name == habit.name}) {
+                if habits.contains(where: {$0.name == name}) {
                     Text("⚠️There is one habit with the same name already, try another one")
                         .foregroundStyle(.red)
                         .font(.caption)
-                } else if habit.name.count >= 3 {
+                } else if name.count >= 3 {
                     Text("✅This name can be used")
                         .foregroundStyle(.green)
                         .font(.caption)
-                } else if habit.name.count < 3 {
+                } else if name.count < 3 {
                     Text("⚠️Min name length is three characters")
                         .foregroundStyle(.orange)
                         .font(.caption)
                 }
             }
             Section {
-                DatePicker("Starts from", selection: $habit.creationDate, displayedComponents: .date)
+                DatePicker("Starts from", selection: $pickerDate, displayedComponents: .date)
             }
             Section {
-                Picker("Reps per day:", selection: $habit.countPerday) {
-                    ForEach(1..<101) { index in
+                Picker("Reps per day:", selection: $maxCount) {
+                    ForEach(0..<101) { index in
                         Text(String(index))
                     }
                 }
                 .pickerStyle(.menu)
-                Picker("Min reps for daily goal:", selection: $habit.minCount) {
-                    ForEach(1..<101) { index in
+                Picker("Min reps for daily goal:", selection: $minCount) {
+                    ForEach(0..<101) { index in
                         Text(String(index))
                     }
                 }
@@ -53,18 +56,24 @@ struct NewHabitView: View {
             }
             Section {
                 Button("Create new habit") {
-                    modelContext.insert(habit)
-                    dismiss()
+                    createNewHabit()
                 }
-                .disabled(habit.name.count < 3 || habits.contains(where: {$0.name == habit.name}))
+                .disabled(name.count < 3 || habits.contains(where: {$0.name == name}) || minCount > maxCount || maxCount < 1)
             }
         }
     }
     
     private func createNewHabit() {
-        let day = Day(date: habit.creationDate, state: .unchecked, count: 0)
-        habit.checkedInDays.append(day)
+        let habit = Habit(name: name, creationDate: pickerDate.convertToString(), minCount: minCount, count: maxCount)
         modelContext.insert(habit)
+        let newDaysStr = habit.creationDate.getDays(for: habit)
+        var newDays = [DayStruct]()
+        for dayStr in newDaysStr {
+            let day = DayStruct(day: dayStr, habit: habit)
+            newDays.append(day)
+            modelContext.insert(day)
+        }
+        habit.checkedInDays = newDays
         dismiss()
     }
 }

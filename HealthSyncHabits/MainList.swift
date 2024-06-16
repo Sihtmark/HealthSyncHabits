@@ -18,41 +18,179 @@ struct MainList: View {
     var body: some View {
         NavigationStack(path: $path) {
             List {
-                ForEach(habits) { habit in
-                    HStack {
-                        Text(habit.name)
-                        Spacer()
-                        Text("\(habit.score)")
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        path.append(habit)
-                    }
-                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                        Button {
-                            
-                        } label: {
-                            Label("Done", systemImage: "checkmark.seal.fill")
+                Section("Unchecked") {
+                    ForEach(habits.filter({ habit in
+                        let today = Date().convertToString()
+                        if let day = habit.checkedInDays.first(where: {$0.date == today}) {
+                            return day.state == "unchecked"
                         }
-                        .tint(.green)
-                        
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button {
-                            
-                        } label: {
-                            Text("Skip once")
+                        return false
+                    }), id: \.self) { habit in
+                        HStack {
+                            Text(habit.name)
+                            Spacer()
+                            Text(habit.todayScore())
+                                .foregroundStyle(habit.todayScoreColor())
+                            Divider()
+                            Text("\(habit.score)")
                         }
-                        .tint(.yellow)
-                        Button {
-                            
-                        } label: {
-                            Text("Skip all")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            path.append(habit)
                         }
-                        .tint(.red)
+                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                            Button {
+                                habit.addRep()
+                            } label: {
+                                Image(systemName: "checkmark.seal.fill")
+                            }
+                            .tint(.green)
+                            Button {
+                                habit.removeRep()
+                            } label: {
+                                Image(systemName: "minus.circle")
+                            }
+                            .tint(.orange)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            if habit.canAlreadyCheck() {
+                                Button {
+                                    habit.checkFromUnCheck()
+                                } label: {
+                                    Text("Check")
+                                }
+                                .tint(.yellow)
+                            }
+                            Button {
+                                habit.skip()
+                            } label: {
+                                Text("Skip")
+                            }
+                            .tint(.red)
+                        }
                     }
                 }
-                .onDelete(perform: deleteHabit)
+                
+                Section("Checked") {
+                    ForEach(habits.filter({ habit in
+                        let today = Date().convertToString()
+                        if let day = habit.checkedInDays.first(where: {$0.date == today}) {
+                            return day.state == "checked"
+                        }
+                        return false
+                    }), id: \.self) { habit in
+                        HStack {
+                            Text(habit.name)
+                            Spacer()
+                            Text(habit.todayScore())
+                                .foregroundStyle(habit.todayScoreColor())
+                            Divider()
+                            Text("\(habit.score)")
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            path.append(habit)
+                        }
+                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                            Button {
+                                habit.addRep()
+                            } label: {
+                                Image(systemName: "checkmark.seal.fill")
+                            }
+                            .tint(.green)
+                            Button {
+                                habit.removeRep()
+                            } label: {
+                                Image(systemName: "minus.circle")
+                            }
+                            .tint(.orange)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .cancel) {
+                                habit.skip()
+                            } label: {
+                                Text("Skip")
+                            }
+                            .tint(.red)
+                        }
+                    }
+                }
+                
+                Section("Skiped") {
+                    ForEach(habits.filter({ habit in
+                        let today = Date().convertToString()
+                        if let day = habit.checkedInDays.first(where: {$0.date == today}) {
+                            return day.state == "skiped"
+                        }
+                        return false
+                    }), id: \.self) { habit in
+                        HStack {
+                            Text(habit.name)
+                            Spacer()
+                            Text(habit.todayScore())
+                                .foregroundStyle(habit.todayScoreColor())
+                            Divider()
+                            Text("\(habit.score)")
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            path.append(habit)
+                        }
+                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                            Button {
+                                habit.AddRepAndReplace()
+                            } label: {
+                                Image(systemName: "checkmark.seal.fill")
+                            }
+                            .tint(.green)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button {
+                                habit.uncheckFromSkiped()
+                            } label: {
+                                Text("Uncheck")
+                            }
+                            .tint(.cyan)
+                        }
+                    }
+                }
+                
+                Section("All habits") {
+                    ForEach(habits) { habit in
+                        HStack {
+                            Text(habit.name)
+                            Spacer()
+                            Text(habit.todayScore())
+                                .foregroundStyle(habit.todayScoreColor())
+                            Divider()
+                            Text("\(habit.score)")
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            path.append(habit)
+                        }
+                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                            Button {
+                                habit.AddRepAndReplace()
+                            } label: {
+                                Image(systemName: "checkmark.seal.fill")
+                            }
+                            .tint(.green)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button {
+                                habit.uncheckFromSkiped()
+                            } label: {
+                                Text("Uncheck")
+                            }
+                            .tint(.cyan)
+                        }
+                    }
+                }
             }
             .sheet(isPresented: $showNewHabitSheet) {
                 NewHabitView()
@@ -73,19 +211,22 @@ struct MainList: View {
                 }
             }
             .navigationDestination(for: Habit.self) { habit in
-                HabitView(habit: habit)
+                HabitView(habit: habit, pickerDate: habit.creationDate.convertToDate())
             }
-//            .task {
-//                let day = Day(date: Date(timeIntervalSinceNow: -9134003), state: .unchecked, count: 3)
-//                let habit = Habit(name: "Yoga", creationDate: Date(timeIntervalSinceNow: -19134003), minCount: 1, count: 2, checkedInDays: [day])
-//                modelContext.insert(habit)
-//            }
+            .onAppear {
+                appendTodayStruct()
+            }
         }
     }
-
-    private func deleteHabit(offsets: IndexSet) {
-        for index in offsets {
-            modelContext.delete(habits[index])
+    
+    private func appendTodayStruct() {
+        for (i, habit) in habits.enumerated() {
+            let newDays = habit.creationDate.getDays(for: habit)
+            for newDay in newDays {
+                let day = DayStruct(day: newDay, habit: habit)
+                modelContext.insert(day)
+                habits[i].checkedInDays.append(day)
+            }
         }
     }
 }
