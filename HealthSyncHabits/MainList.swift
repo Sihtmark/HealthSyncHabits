@@ -32,7 +32,7 @@ struct MainList: View {
                             Text(habit.todayScore())
                                 .foregroundStyle(habit.todayScoreColor())
                             Divider()
-                            Text("\(habit.score)")
+                            Text("🔥\(habit.score)")
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
@@ -42,12 +42,14 @@ struct MainList: View {
                         .swipeActions(edge: .leading, allowsFullSwipe: true) {
                             Button {
                                 habit.addRep()
+                                habit.calculateScore()
                             } label: {
                                 Image(systemName: "checkmark.seal.fill")
                             }
                             .tint(.green)
                             Button {
                                 habit.removeRep()
+                                habit.calculateScore()
                             } label: {
                                 Image(systemName: "minus.circle")
                             }
@@ -57,6 +59,7 @@ struct MainList: View {
                             if habit.canAlreadyCheck() {
                                 Button {
                                     habit.checkFromUnCheck()
+                                    habit.calculateScore()
                                 } label: {
                                     Text("Check")
                                 }
@@ -64,6 +67,7 @@ struct MainList: View {
                             }
                             Button {
                                 habit.skip()
+                                habit.calculateScore()
                             } label: {
                                 Text("Skip")
                             }
@@ -86,7 +90,7 @@ struct MainList: View {
                             Text(habit.todayScore())
                                 .foregroundStyle(habit.todayScoreColor())
                             Divider()
-                            Text("\(habit.score)")
+                            Text("🔥\(habit.score)")
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
@@ -96,12 +100,14 @@ struct MainList: View {
                         .swipeActions(edge: .leading, allowsFullSwipe: true) {
                             Button {
                                 habit.addRep()
+                                habit.calculateScore()
                             } label: {
                                 Image(systemName: "checkmark.seal.fill")
                             }
                             .tint(.green)
                             Button {
                                 habit.removeRep()
+                                habit.calculateScore()
                             } label: {
                                 Image(systemName: "minus.circle")
                             }
@@ -110,6 +116,7 @@ struct MainList: View {
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .cancel) {
                                 habit.skip()
+                                habit.calculateScore()
                             } label: {
                                 Text("Skip")
                             }
@@ -132,7 +139,7 @@ struct MainList: View {
                             Text(habit.todayScore())
                                 .foregroundStyle(habit.todayScoreColor())
                             Divider()
-                            Text("\(habit.score)")
+                            Text("🔥\(habit.score)")
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
@@ -142,6 +149,7 @@ struct MainList: View {
                         .swipeActions(edge: .leading, allowsFullSwipe: true) {
                             Button {
                                 habit.AddRepAndReplace()
+                                habit.calculateScore()
                             } label: {
                                 Image(systemName: "checkmark.seal.fill")
                             }
@@ -150,6 +158,7 @@ struct MainList: View {
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button {
                                 habit.uncheckFromSkiped()
+                                habit.calculateScore()
                             } label: {
                                 Text("Uncheck")
                             }
@@ -158,39 +167,41 @@ struct MainList: View {
                     }
                 }
                 
-                Section("All habits") {
-                    ForEach(habits) { habit in
-                        HStack {
-                            Text(habit.name)
-                            Spacer()
-                            Text(habit.todayScore())
-                                .foregroundStyle(habit.todayScoreColor())
-                            Divider()
-                            Text("\(habit.score)")
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            path.append(habit)
-                        }
-                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                            Button {
-                                habit.AddRepAndReplace()
-                            } label: {
-                                Image(systemName: "checkmark.seal.fill")
-                            }
-                            .tint(.green)
-                        }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button {
-                                habit.uncheckFromSkiped()
-                            } label: {
-                                Text("Uncheck")
-                            }
-                            .tint(.cyan)
-                        }
-                    }
-                }
+//                Section("All habits") {
+//                    ForEach(habits) { habit in
+//                        HStack {
+//                            Text(habit.name)
+//                            Spacer()
+//                            Text(habit.todayScore())
+//                                .foregroundStyle(habit.todayScoreColor())
+//                            Divider()
+//                            Text("🔥\(habit.score)")
+//                        }
+//                        .frame(maxWidth: .infinity, alignment: .leading)
+//                        .contentShape(Rectangle())
+//                        .onTapGesture {
+//                            path.append(habit)
+//                        }
+//                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+//                            Button {
+//                                habit.AddRepAndReplace()
+//                                habit.calculateScore()
+//                            } label: {
+//                                Image(systemName: "checkmark.seal.fill")
+//                            }
+//                            .tint(.green)
+//                        }
+//                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+//                            Button {
+//                                habit.uncheckFromSkiped()
+//                                habit.calculateScore()
+//                            } label: {
+//                                Text("Uncheck")
+//                            }
+//                            .tint(.cyan)
+//                        }
+//                    }
+//                }
             }
             .sheet(isPresented: $showNewHabitSheet) {
                 NewHabitView()

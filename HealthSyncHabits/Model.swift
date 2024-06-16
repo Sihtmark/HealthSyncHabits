@@ -144,6 +144,19 @@ final class Habit {
             }
         }
     }
+    
+    func calculateScore() {
+        let arr = checkedInDays.sorted(by: {$0.date > $1.date}).map{$0.state}
+        var count = 0
+        for state in arr {
+            if state == "unchecked" {
+                score = count
+                return
+            } else if state == "checked" {
+                count += 1
+            }
+        }
+    }
 }
 
 @Model
