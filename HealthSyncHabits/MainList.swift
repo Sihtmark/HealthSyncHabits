@@ -90,7 +90,7 @@ struct MainList: View {
                             Text(habit.todayScore())
                                 .foregroundStyle(habit.todayScoreColor())
                             Divider()
-                            Text("🔥\(habit.score)")
+                            Text("🔥\(habit.score + 1)")
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())

@@ -146,7 +146,8 @@ final class Habit {
     }
     
     func calculateScore() {
-        let arr = checkedInDays.sorted(by: {$0.date > $1.date}).map{$0.state}
+        var arr = checkedInDays.sorted(by: {$0.date > $1.date}).map{$0.state}
+        arr.removeFirst()
         var count = 0
         for state in arr {
             if state == "unchecked" {
@@ -156,6 +157,7 @@ final class Habit {
                 count += 1
             }
         }
+        score = count
     }
 }
 
@@ -178,6 +180,10 @@ final class DayStruct {
         self.state = "unchecked"
         self.count = 0
         self.habit = habit
+    }
+    
+    func replaceStatus(with newState: String) {
+        state = newState
     }
 }
 

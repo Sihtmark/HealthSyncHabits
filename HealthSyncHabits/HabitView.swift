@@ -13,9 +13,8 @@ struct HabitView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Bindable var habit: Habit
-    @Query var days: [DayStruct]
     @State var pickerDate: Date
-    let status = ["unchecked", "checked", "skiped"]
+    let statusArray = ["unchecked", "checked", "skiped"]
     
     var body: some View {
         VStack {
@@ -50,13 +49,43 @@ struct HabitView: View {
                     }
                 }
                 Section("History") {
-                    ForEach(days, id: \.self) { day in
-                        if day.habit?.id == habit.id {
-                            HStack {
-                                Text(day.date)
-                                Text(day.state)
+                    ForEach(habit.checkedInDays.sorted(by: {$0.date > $1.date}), id: \.self) { day in
+                        HStack {
+                            Text(day.date)
+                            Spacer()
+                            Text(day.state)
+//                            if let index = habit.checkedInDays.firstIndex(where: {$0.date == day.date}) {
+//                                habit.checkedInDays[index].replaceStatus(with: status)
+//                            } else {
+//                                print("we couln't change day")
+//                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            if day.state != "skiped" {
+                                Button("Skip") {
+                                    day.state = "skiped"
+                                    day.count = 0
+                                    habit.calculateScore()
+                                }
+                                .tint(.yellow)
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            if day.state != "checked" {
+                                Button("Check") {
+                                    day.state = "checked"
+                                    day.count = habit.minCount
+                                    habit.calculateScore()
+                                }
+                                .tint(.green)
+                            }
+                            if day.state != "unchecked" {
+                                Button("Uncheck") {
+                                    day.state = "unchecked"
+                                    day.count = 0
+                                    habit.calculateScore()
+                                }
+                                .tint(.orange)
+                            }
                         }
                     }
                 }
