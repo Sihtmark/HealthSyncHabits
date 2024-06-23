@@ -17,76 +17,63 @@ struct HabitView: View {
     let statusArray = ["unchecked", "checked", "skiped"]
     
     var body: some View {
-        VStack {
-            List {
-                Section {
-                    TextField("Add your habit name here...", text: $habit.name)
-                }
-                Section {
-                    DatePicker("Starts from", selection: $pickerDate, displayedComponents: .date)
-                        .onSubmit {
-                            habit.creationDate = pickerDate.convertToString()
-                        }
-                }
-                Section {
-                    Picker("Reps per day:", selection: $habit.countPerday) {
-                        ForEach(0..<101) { index in
-                            Text(String(index))
-                        }
+        List {
+            Section {
+                TextField("Add your habit name here...", text: $habit.name)
+            }
+            Section {
+                DatePicker("Starts from", selection: $pickerDate, displayedComponents: .date)
+                    .onSubmit {
+                        habit.creationDate = pickerDate.convertToString()
                     }
-                    .pickerStyle(.menu)
-                    Picker("Min reps for daily goal:", selection: $habit.minCount) {
-                        ForEach(0..<101) { index in
-                            Text(String(index))
-                        }
-                    }
-                    .pickerStyle(.menu)
-                }
-                Section {
-                    Button("Delete this habit", role: .destructive) {
-                        modelContext.delete(habit)
-                        dismiss()
+            }
+            Section {
+                Picker("Reps per day:", selection: $habit.countPerday) {
+                    ForEach(0..<101) { index in
+                        Text(String(index))
                     }
                 }
-                Section("History") {
-                    ForEach(habit.checkedInDays.sorted(by: {$0.date > $1.date}), id: \.self) { day in
-                        HStack {
-                            Text(day.date)
-                            Spacer()
-                            Text(day.state)
-//                            if let index = habit.checkedInDays.firstIndex(where: {$0.date == day.date}) {
-//                                habit.checkedInDays[index].replaceStatus(with: status)
-//                            } else {
-//                                print("we couln't change day")
-//                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            if day.state != "skiped" {
-                                Button("Skip") {
-                                    day.state = "skiped"
-                                    day.count = 0
-                                    habit.calculateScore()
+                .pickerStyle(.menu)
+            }
+            Section {
+                Button("Delete this habit", role: .destructive) {
+                    modelContext.delete(habit)
+                    dismiss()
+                }
+            }
+            Section("History") {
+                ForEach(habit.checkedInDays.sorted(by: {$0.date > $1.date}), id: \.self) { day in
+                    HStack {
+                        Text(day.date)
+                        Spacer()
+                        Text(day.state)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                if day.state != "skiped" {
+                                    Button("Skip") {
+                                        day.state = "skiped"
+                                        day.count = 0
+                                        habit.calculateScore()
+                                    }
+                                    .tint(.yellow)
                                 }
-                                .tint(.yellow)
-                            }
-                            if day.state != "checked" {
-                                Button("Check") {
-                                    day.state = "checked"
-                                    day.count = habit.minCount
-                                    habit.calculateScore()
+                                if day.state != "checked" {
+                                    Button("Check") {
+                                        day.state = "checked"
+                                        day.count = habit.countPerday
+                                        habit.calculateScore()
+                                    }
+                                    .tint(.green)
                                 }
-                                .tint(.green)
-                            }
-                            if day.state != "unchecked" {
-                                Button("Uncheck") {
-                                    day.state = "unchecked"
-                                    day.count = 0
-                                    habit.calculateScore()
+                                if day.state != "unchecked" {
+                                    Button("Uncheck") {
+                                        day.state = "unchecked"
+                                        day.count = 0
+                                        habit.calculateScore()
+                                    }
+                                    .tint(.orange)
                                 }
-                                .tint(.orange)
                             }
-                        }
                     }
                 }
             }
@@ -94,12 +81,8 @@ struct HabitView: View {
     }
 }
 
-//#Preview {
-//    HabitView(habit: previewHabit)
-//        .modelContainer(for: Habit.self, inMemory: true)
-//        .environment(ViewModel())
-//}
-//
-//let previewHabit = Habit(name: "Yoga", creationDate: "2024-02-15", minCount: 1, count: 2, checkedInDays: [previewDay])
-//let previewDay = Day(date: "2024-01-01", state: .unchecked, count: 3, habit: previewHabit)
-//
+#Preview {
+    HabitView(habit: Habit(name: "Yoga", creationDate: "2024-03-19", count: 2, interval: ["daily": []], checkedInDays: []), pickerDate: "2024-03-19".convertToDate())
+        .modelContainer(for: Habit.self, inMemory: true)
+        .environment(ViewModel())
+}

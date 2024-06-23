@@ -10,24 +10,22 @@ import SwiftData
 
 @Model
 final class Habit {
-    let id = UUID().uuidString
-    var name: String
+    @Attribute(.unique) var name: String
     var creationDate: String
     var isArchived: Bool
-    var countPerday: Int // сколько раз надо выполнить привычку за день в идеале
-    var minCount: Int // минимальное кол-во раз за день для того чтобы засчитать привычку как выполненную
-    var score: Int // сколько дней подряд выполнялась привычка без пропусков
-    @Relationship(deleteRule: .cascade, inverse: \DayStruct.habit)
-    var checkedInDays = [DayStruct]()
+    var countPerday: Int
+    var score: Int
+    var interval: [String: [Int]]
+    @Relationship(deleteRule: .cascade, inverse: \DayStruct.habit) var checkedInDays = [DayStruct]()
     
     // Создание новой привычки
-    init(name: String, creationDate: String, minCount: Int, count: Int) {
+    init(name: String, creationDate: String, count: Int, interval: [String: [Int]]) {
         self.name = name
         self.creationDate = creationDate
         self.isArchived = false
         self.countPerday = count
-        self.minCount = minCount
         self.score = 0
+        self.interval = interval
     }
     
     init() {
@@ -35,18 +33,18 @@ final class Habit {
         self.creationDate = Date().convertToString()
         self.isArchived = false
         self.countPerday = 1
-        self.minCount = 1
         self.score = 0
+        self.interval = ["daily": []]
     }
     
     // для превью
-    init(name: String, creationDate: String, minCount: Int, count: Int, checkedInDays: [DayStruct]) {
+    init(name: String, creationDate: String, count: Int, interval: [String: [Int]], checkedInDays: [DayStruct]) {
         self.name = name
         self.creationDate = creationDate
         self.isArchived = false
         self.countPerday = count
-        self.minCount = minCount
         self.score = 0
+        self.interval = interval
         self.checkedInDays = checkedInDays
     }
     
@@ -62,9 +60,7 @@ final class Habit {
         let today = Date().convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
             let currentCount = checkedInDays[index].count
-            if currentCount < minCount {
-                return .red
-            } else if currentCount >= minCount && currentCount < countPerday {
+            if currentCount < countPerday {
                 return .yellow
             } else if currentCount >= countPerday {
                 return .green
@@ -87,7 +83,7 @@ final class Habit {
         let today = Date().convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}), checkedInDays[index].count > 0 {
             checkedInDays[index].count -= 1
-            if checkedInDays[index].count < minCount {
+            if checkedInDays[index].count < countPerday {
                 checkedInDays[index].state = "unchecked"
             }
         }
@@ -112,7 +108,7 @@ final class Habit {
     func canAlreadyCheck() -> Bool {
         let today = Date().convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
-            if checkedInDays[index].count >= minCount {
+            if checkedInDays[index].count >= countPerday {
                 return true
             }
         }

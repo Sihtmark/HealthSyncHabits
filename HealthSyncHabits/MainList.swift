@@ -18,7 +18,7 @@ struct MainList: View {
     var body: some View {
         NavigationStack(path: $path) {
             List {
-                Section("Unchecked") {
+                Section {
                     ForEach(habits.filter({ habit in
                         let today = Date().convertToString()
                         if let day = habit.checkedInDays.first(where: {$0.date == today}) {
@@ -74,9 +74,15 @@ struct MainList: View {
                             .tint(.red)
                         }
                     }
+                } header: {
+                    Text("Unchecked ☑️")
+                        .font(.title3)
+                        .bold()
+                        .foregroundStyle(.black)
+                        .offset(x: -20)
                 }
                 
-                Section("Checked") {
+                Section {
                     ForEach(habits.filter({ habit in
                         let today = Date().convertToString()
                         if let day = habit.checkedInDays.first(where: {$0.date == today}) {
@@ -123,9 +129,15 @@ struct MainList: View {
                             .tint(.red)
                         }
                     }
+                } header: {
+                    Text("Checked ✅")
+                        .font(.title3)
+                        .bold()
+                        .foregroundStyle(.black)
+                        .offset(x: -20)
                 }
                 
-                Section("Skiped") {
+                Section {
                     ForEach(habits.filter({ habit in
                         let today = Date().convertToString()
                         if let day = habit.checkedInDays.first(where: {$0.date == today}) {
@@ -165,6 +177,12 @@ struct MainList: View {
                             .tint(.cyan)
                         }
                     }
+                } header: {
+                    Text("Skiped ❎")
+                        .font(.title3)
+                        .bold()
+                        .foregroundStyle(.black)
+                        .offset(x: -20)
                 }
                 
 //                Section("All habits") {
