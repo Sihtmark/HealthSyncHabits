@@ -31,89 +31,91 @@ struct NewHabitView: View {
     @State private var offDaysCount = 1
     
     var body: some View {
-        List {
-            Section {
-                TextField("Add your habit name here...", text: $name)
-            } footer: {
-                if habits.contains(where: {$0.name == name}) {
-                    Text("⚠️There is one habit with the same name already, try another one")
-                        .foregroundStyle(.red)
-                        .font(.caption)
-                } else if name.count >= 3 {
-                    Text("✅This name can be used")
-                        .foregroundStyle(.green)
-                        .font(.caption)
-                } else if name.count < 3 {
-                    Text("⚠️Min name length is three characters")
-                        .foregroundStyle(.orange)
-                        .font(.caption)
-                }
-            }
-            Section {
-                DatePicker("Starts from", selection: $pickerDate, displayedComponents: .date)
-            }
-            Section {
-                Picker("Reps per day:", selection: $countPerDay) {
-                    ForEach(0..<101) { index in
-                        Text(String(index))
-                            .tag(index)
+        NavigationStack {
+            List {
+                Section {
+                    TextField("Add your habit name here...", text: $name)
+                } footer: {
+                    if habits.contains(where: {$0.name == name}) {
+                        Text("⚠️There is one habit with the same name already, try another one")
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                    } else if name.count >= 3 {
+                        Text("✅This name can be used")
+                            .foregroundStyle(.green)
+                            .font(.caption)
+                    } else if name.count < 3 {
+                        Text("⚠️Min name length is three characters")
+                            .foregroundStyle(.orange)
+                            .font(.caption)
                     }
                 }
-                .pickerStyle(.menu)
-            }
-            Section {
-                Picker("Day interval:", selection: $pickedInterval) {
-                    ForEach(Interval.allCases, id: \.self) { interval in
-                        Text(interval.rawValue)
-                            .tag(interval)
-                    }
+                Section {
+                    DatePicker("Starts from", selection: $pickerDate, displayedComponents: .date)
                 }
-                .pickerStyle(.menu)
-                if pickedInterval == .byWeek {
-                    HStack(spacing: 0) {
-                        ForEach(Array(weekDays.enumerated()), id: \.element) { index, day in
-                            ZStack {
-                                pickedWeekDays.contains(index + 1) ? Color.blue : Color.black.opacity(0.001)
-                                Text(day)
-                                    .foregroundStyle(pickedWeekDays.contains(index + 1) ? .white : .primary)
-                                    .onTapGesture {
-                                        if pickedWeekDays.contains(index + 1) {
-                                            pickedWeekDays.removeAll(where: {$0 == (index + 1)})
-                                        } else {
-                                            pickedWeekDays.append(index + 1)
+                Section {
+                    Picker("Reps per day:", selection: $countPerDay) {
+                        ForEach(0..<101) { index in
+                            Text(String(index))
+                                .tag(index)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+                Section {
+                    Picker("Day interval:", selection: $pickedInterval) {
+                        ForEach(Interval.allCases, id: \.self) { interval in
+                            Text(interval.rawValue)
+                                .tag(interval)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    if pickedInterval == .byWeek {
+                        HStack(spacing: 0) {
+                            ForEach(Array(weekDays.enumerated()), id: \.element) { index, day in
+                                ZStack {
+                                    pickedWeekDays.contains(index) ? Color.blue : Color.black.opacity(0.001)
+                                    Text(day)
+                                        .foregroundStyle(pickedWeekDays.contains(index) ? .white : .primary)
+                                        .onTapGesture {
+                                            if pickedWeekDays.contains(index) {
+                                                pickedWeekDays.removeAll(where: {$0 == (index)})
+                                            } else {
+                                                pickedWeekDays.append(index)
+                                            }
                                         }
-                                    }
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                if index != 6 {
+                                    Divider()
+                                }
                             }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            if index != 6 {
-                                Divider()
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 40)
+                    } else if pickedInterval == .custom {
+                        Picker("Active days in a row:", selection: $activeDaysCount) {
+                            ForEach(0..<101) { index in
+                                Text(String(index))
+                                    .tag(index)
                             }
                         }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 40)
-                } else if pickedInterval == .custom {
-                    Picker("Active days in a row:", selection: $activeDaysCount) {
-                        ForEach(0..<101) { index in
-                            Text(String(index))
-                                .tag(index)
+                        .pickerStyle(.menu)
+                        Picker("Off days in a row:", selection: $offDaysCount) {
+                            ForEach(0..<101) { index in
+                                Text(String(index))
+                                    .tag(index)
+                            }
                         }
+                        .pickerStyle(.menu)
                     }
-                    .pickerStyle(.menu)
-                    Picker("Off days in a row:", selection: $offDaysCount) {
-                        ForEach(0..<101) { index in
-                            Text(String(index))
-                                .tag(index)
-                        }
+                }
+                Section {
+                    Button("Create new habit") {
+                        createNewHabit()
                     }
-                    .pickerStyle(.menu)
+                    .disabled(name.count < 3 || habits.contains(where: {$0.name == name}) || countPerDay < 1 || (pickedInterval == .byWeek && pickedWeekDays.isEmpty) || (pickedInterval == .custom && (activeDaysCount == 0 || offDaysCount == 0)))
                 }
-            }
-            Section {
-                Button("Create new habit") {
-                    createNewHabit()
-                }
-                .disabled(name.count < 3 || habits.contains(where: {$0.name == name}) || countPerDay < 1 || (pickedInterval == .byWeek && pickedWeekDays.isEmpty) || (pickedInterval == .custom && (activeDaysCount == 0 || offDaysCount == 0)))
             }
         }
     }
@@ -132,9 +134,31 @@ struct NewHabitView: View {
         let newDaysStr = habit.creationDate.getDays(for: habit)
         var newDays = [DayStruct]()
         for dayStr in newDaysStr {
-            let day = DayStruct(day: dayStr, habit: habit)
-            newDays.append(day)
-            modelContext.insert(day)
+            guard let interval = habit.interval.first else {return}
+            if interval.key == "by week" {
+                guard let dayOfWeek = dayStr.dayOfWeek() else {return}
+                if interval.value.contains(dayOfWeek) {
+                    let day = DayStruct(day: dayStr, habit: habit, state: "unchecked")
+                    newDays.append(day)
+                    modelContext.insert(day)
+                } else {
+                    let day = DayStruct(day: dayStr, habit: habit, state: "skiped")
+                    newDays.append(day)
+                    modelContext.insert(day)
+                }
+            } else if interval.key == "custom" {
+                guard interval.value.count == 2 else {return}
+                let activeDaysCount = interval.value[0]
+                let offDaysCount = interval.value[1]
+                let state = dayStr.isWorkingDay(from: habit.creationDate, active: activeDaysCount, off: offDaysCount)
+                let day = DayStruct(day: dayStr, habit: habit, state: state)
+                newDays.append(day)
+                modelContext.insert(day)
+            } else {
+                let day = DayStruct(day: dayStr, habit: habit)
+                newDays.append(day)
+                modelContext.insert(day)
+            }
         }
         habit.checkedInDays = newDays
         dismiss()

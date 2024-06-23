@@ -171,9 +171,9 @@ final class DayStruct {
         self.habit = habit
     }
     
-    init(day: String, habit: Habit) {
+    init(day: String, habit: Habit, state: String = "unchecked") {
         self.date = day
-        self.state = "unchecked"
+        self.state = state
         self.count = 0
         self.habit = habit
     }

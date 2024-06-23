@@ -184,53 +184,14 @@ struct MainList: View {
                         .foregroundStyle(.black)
                         .offset(x: -20)
                 }
-                
-//                Section("All habits") {
-//                    ForEach(habits) { habit in
-//                        HStack {
-//                            Text(habit.name)
-//                            Spacer()
-//                            Text(habit.todayScore())
-//                                .foregroundStyle(habit.todayScoreColor())
-//                            Divider()
-//                            Text("🔥\(habit.score)")
-//                        }
-//                        .frame(maxWidth: .infinity, alignment: .leading)
-//                        .contentShape(Rectangle())
-//                        .onTapGesture {
-//                            path.append(habit)
-//                        }
-//                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
-//                            Button {
-//                                habit.AddRepAndReplace()
-//                                habit.calculateScore()
-//                            } label: {
-//                                Image(systemName: "checkmark.seal.fill")
-//                            }
-//                            .tint(.green)
-//                        }
-//                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-//                            Button {
-//                                habit.uncheckFromSkiped()
-//                                habit.calculateScore()
-//                            } label: {
-//                                Text("Uncheck")
-//                            }
-//                            .tint(.cyan)
-//                        }
-//                    }
-//                }
             }
             .sheet(isPresented: $showNewHabitSheet) {
                 NewHabitView()
                     .presentationDragIndicator(.visible)
-                    .presentationDetents([.medium])
+                    .presentationDetents([.height(520)])
             }
             .navigationTitle("Habits")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
                 ToolbarItem {
                     Button { 
                         showNewHabitSheet.toggle()
@@ -251,10 +212,32 @@ struct MainList: View {
     private func appendTodayStruct() {
         for (i, habit) in habits.enumerated() {
             let newDays = habit.creationDate.getDays(for: habit)
-            for newDay in newDays {
-                let day = DayStruct(day: newDay, habit: habit)
-                modelContext.insert(day)
-                habits[i].checkedInDays.append(day)
+            for dayStr in newDays {
+                guard let interval = habit.interval.first else {return}
+                if interval.key == "by week" {
+                    guard let dayOfWeek = dayStr.dayOfWeek() else {return}
+                    if interval.value.contains(dayOfWeek) {
+                        let day = DayStruct(day: dayStr, habit: habit, state: "unchecked")
+                        modelContext.insert(day)
+                        habits[i].checkedInDays.append(day)
+                    } else {
+                        let day = DayStruct(day: dayStr, habit: habit, state: "skiped")
+                        modelContext.insert(day)
+                        habits[i].checkedInDays.append(day)
+                    }
+                } else if interval.key == "custom" {
+                    guard interval.value.count == 2 else {return}
+                    let activeDaysCount = interval.value[0]
+                    let offDaysCount = interval.value[1]
+                    let state = dayStr.isWorkingDay(from: habit.creationDate, active: activeDaysCount, off: offDaysCount)
+                    let day = DayStruct(day: dayStr, habit: habit, state: state)
+                    modelContext.insert(day)
+                    habits[i].checkedInDays.append(day)
+                } else {
+                    let day = DayStruct(day: dayStr, habit: habit)
+                    modelContext.insert(day)
+                    habits[i].checkedInDays.append(day)
+                }
             }
         }
     }
