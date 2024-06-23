@@ -21,6 +21,17 @@ extension Date {
 }
 
 extension String {
+    func dayOfWeek() -> Int? {
+        let week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        let date = self.convertToDate()
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = TimeZone(identifier: "GMT")
+        formatter.dateFormat = "EEEE"
+        let dayOfWeek = formatter.string(from: date)
+        return week.firstIndex(where: {$0 == dayOfWeek})
+    }
+    
     func convertToDate() -> Date {
         let dateFormatter = DateFormatter()
         guard let timeZone = TimeZone(identifier: "GMT") else { return Date() }
@@ -53,5 +64,15 @@ extension String {
             }
         }
         return dates
+    }
+    
+    func isWorkingDay(from creationDate: String, active: Int, off: Int) -> String {
+        guard let timeZone = TimeZone(identifier: "GMT") else { return "unchecked"}
+        let startDate = creationDate.convertToDate() // Your first day of work
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        let diff = calendar.dateComponents([.day], from: startDate, to: self.convertToDate()).day!
+        let mod = diff % (active + off)
+        return mod < active ? "unchecked" : "skiped"
     }
 }
