@@ -8,6 +8,12 @@
 import SwiftUI
 import SwiftData
 
+enum Interval: String, Equatable, CaseIterable {
+    case daily = "daily"
+    case byWeek = "by week"
+    case custom = "custom"
+}
+
 struct NewHabitView: View {
     @Environment(ViewModel.self) private var vm
     @Environment(\.modelContext) private var modelContext
@@ -18,8 +24,7 @@ struct NewHabitView: View {
     @State private var countPerDay = 1
     
     // Interval
-    let array = ["daily", "by week", "custom"]
-    @State private var pickedInterval = "Daily"
+    @State private var pickedInterval: Interval = .daily
     let weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     @State private var pickedWeekDays = [Int]()
     @State private var activeDaysCount = 1
@@ -51,18 +56,20 @@ struct NewHabitView: View {
                 Picker("Reps per day:", selection: $countPerDay) {
                     ForEach(0..<101) { index in
                         Text(String(index))
+                            .tag(index)
                     }
                 }
                 .pickerStyle(.menu)
             }
             Section {
                 Picker("Day interval:", selection: $pickedInterval) {
-                    ForEach(array, id: \.self) { interval in
-                        Text(interval)
+                    ForEach(Interval.allCases, id: \.self) { interval in
+                        Text(interval.rawValue)
+                            .tag(interval)
                     }
                 }
                 .pickerStyle(.menu)
-                if pickedInterval == "by week" {
+                if pickedInterval == .byWeek {
                     HStack(spacing: 0) {
                         ForEach(Array(weekDays.enumerated()), id: \.element) { index, day in
                             ZStack {
@@ -85,16 +92,18 @@ struct NewHabitView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .frame(height: 40)
-                } else if pickedInterval == "custom" {
+                } else if pickedInterval == .custom {
                     Picker("Active days in a row:", selection: $activeDaysCount) {
                         ForEach(0..<101) { index in
                             Text(String(index))
+                                .tag(index)
                         }
                     }
                     .pickerStyle(.menu)
                     Picker("Off days in a row:", selection: $offDaysCount) {
                         ForEach(0..<101) { index in
                             Text(String(index))
+                                .tag(index)
                         }
                     }
                     .pickerStyle(.menu)
@@ -104,18 +113,18 @@ struct NewHabitView: View {
                 Button("Create new habit") {
                     createNewHabit()
                 }
-                .disabled(name.count < 3 || habits.contains(where: {$0.name == name}) || countPerDay < 1 || (pickedInterval == "by week" && pickedWeekDays.isEmpty) || (pickedInterval == "custom" && (activeDaysCount == 0 || offDaysCount == 0)))
+                .disabled(name.count < 3 || habits.contains(where: {$0.name == name}) || countPerDay < 1 || (pickedInterval == .byWeek && pickedWeekDays.isEmpty) || (pickedInterval == .custom && (activeDaysCount == 0 || offDaysCount == 0)))
             }
         }
     }
     
     private func createNewHabit() {
         var interval: [String: [Int]] = [:]
-        if pickedInterval == "daily" {
+        if pickedInterval == .daily {
             interval = ["daily": []]
-        } else if pickedInterval == "by week" {
+        } else if pickedInterval == .byWeek {
             interval = ["by week": pickedWeekDays]
-        } else if pickedInterval == "custom" {
+        } else if pickedInterval == .custom {
             interval = ["custom": [activeDaysCount, offDaysCount]]
         }
         let habit = Habit(name: name, creationDate: pickerDate.convertToString(), count: countPerDay, interval: interval)

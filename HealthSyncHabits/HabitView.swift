@@ -31,6 +31,7 @@ struct HabitView: View {
                 Picker("Reps per day:", selection: $habit.countPerday) {
                     ForEach(0..<101) { index in
                         Text(String(index))
+                            .tag(index)
                     }
                 }
                 .pickerStyle(.menu)
