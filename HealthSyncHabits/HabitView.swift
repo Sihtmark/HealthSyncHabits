@@ -83,7 +83,7 @@ struct HabitView: View {
 }
 
 #Preview {
-    HabitView(habit: Habit(name: "Yoga", creationDate: "2024-03-19", count: 2, interval: ["daily": []], checkedInDays: []), pickerDate: "2024-03-19".convertToDate())
+    HabitView(habit: Habit(name: "Yoga", creationDate: "2024-03-19", count: 2, interval: ["daily": []], checkedInDays: [], time: ["30-06", "55-18"]), pickerDate: "2024-03-19".convertToDate())
         .modelContainer(for: Habit.self, inMemory: true)
         .environment(ViewModel())
 }

@@ -22,6 +22,8 @@ struct NewHabitView: View {
     @State private var name = ""
     @State private var pickerDate = Date()
     @State private var countPerDay = 1
+    @State private var showTimeSection = false
+    @State private var timeArray = ["00-00"]
     
     // Interval
     @State private var pickedInterval: Interval = .daily
@@ -61,6 +63,18 @@ struct NewHabitView: View {
                         }
                     }
                     .pickerStyle(.menu)
+                    Toggle("Set time", isOn: $showTimeSection)
+                }
+                if showTimeSection {
+                    Section {
+                        ForEach(Array(timeArray.enumerated()), id: \.offset) { key, value in
+                            TimePickerCell(index: key + 1) { time in
+                                timeArray[key] = time
+                            }
+                        }
+                    } footer: {
+                        Text("Choose time for each rep")
+                    }
                 }
                 Section {
                     Picker("Day interval:", selection: $pickedInterval) {
@@ -117,6 +131,19 @@ struct NewHabitView: View {
                     .disabled(name.count < 3 || habits.contains(where: {$0.name == name}) || countPerDay < 1 || (pickedInterval == .byWeek && pickedWeekDays.isEmpty) || (pickedInterval == .custom && (activeDaysCount == 0 || offDaysCount == 0)))
                 }
             }
+            .onChange(of: countPerDay) { oldValue, newValue in
+                if oldValue < newValue {
+                    for e in 0..<(newValue - oldValue) {
+                        timeArray.append("00-00")
+                    }
+                } else {
+                    var count = oldValue - 1
+                    while count != newValue - 1 {
+                        timeArray.remove(at: count)
+                        count -= 1
+                    }
+                }
+            }
         }
     }
     
@@ -129,7 +156,7 @@ struct NewHabitView: View {
         } else if pickedInterval == .custom {
             interval = ["custom": [activeDaysCount, offDaysCount]]
         }
-        let habit = Habit(name: name, creationDate: pickerDate.convertToString(), count: countPerDay, interval: interval)
+        let habit = Habit(name: name, creationDate: pickerDate.convertToString(), count: countPerDay, interval: interval, time: timeArray)
         modelContext.insert(habit)
         let newDaysStr = habit.creationDate.getDays(for: habit)
         var newDays = [DayStruct]()
@@ -169,4 +196,23 @@ struct NewHabitView: View {
     NewHabitView()
         .modelContainer(for: Habit.self, inMemory: false)
         .environment(ViewModel())
+}
+
+struct TimePickerCell: View {
+    @State private var time = Date()
+    let index: Int
+    let onDismiss: (String) -> Void
+    
+    var body: some View {
+        HStack {
+            DatePicker(
+                "Rep \(index)",
+                selection: $time,
+                displayedComponents: .hourAndMinute
+            )
+            .onChange(of: time) { oldValue, newValue in
+                onDismiss(time.timeToString())
+            }
+        }
+    }
 }

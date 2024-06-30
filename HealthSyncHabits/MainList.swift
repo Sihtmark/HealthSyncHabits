@@ -14,6 +14,7 @@ struct MainList: View {
     @Query(sort: \Habit.name, order: .forward, animation: .easeInOut) var habits: [Habit]
     @State private var path = NavigationPath()
     @State private var showNewHabitSheet = false
+    @State private var onAppOpening = true
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -32,7 +33,8 @@ struct MainList: View {
                             Text(habit.todayScore())
                                 .foregroundStyle(habit.todayScoreColor())
                             Divider()
-                            Text("🔥\(habit.score)")
+                            Text("\(habit.score)")
+                                .foregroundStyle(scoreColor(score: habit.score))
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
@@ -96,7 +98,8 @@ struct MainList: View {
                             Text(habit.todayScore())
                                 .foregroundStyle(habit.todayScoreColor())
                             Divider()
-                            Text("🔥\(habit.score + 1)")
+                            Text("\(habit.score)")
+                                .foregroundStyle(scoreColor(score: habit.score))
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
@@ -151,7 +154,8 @@ struct MainList: View {
                             Text(habit.todayScore())
                                 .foregroundStyle(habit.todayScoreColor())
                             Divider()
-                            Text("🔥\(habit.score)")
+                            Text("\(habit.score)")
+                                .foregroundStyle(scoreColor(score: habit.score))
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
@@ -204,7 +208,10 @@ struct MainList: View {
                 HabitView(habit: habit, pickerDate: habit.creationDate.convertToDate())
             }
             .onAppear {
-                appendTodayStruct()
+                if onAppOpening {
+                        appendTodayStruct()
+                    onAppOpening = false
+                }
             }
         }
     }
@@ -239,6 +246,22 @@ struct MainList: View {
                     habits[i].checkedInDays.append(day)
                 }
             }
+            habit.calculateScore()
+        }
+    }
+    
+    private func scoreColor(score: Int) -> Color {
+        switch score {
+        case 0..<7:
+            return .red
+        case 7..<14:
+            return .orange
+        case 14..<21:
+            return .yellow
+        case 21..<28:
+            return .cyan
+        default:
+            return .green
         }
     }
 }

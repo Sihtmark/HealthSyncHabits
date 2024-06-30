@@ -16,16 +16,18 @@ final class Habit {
     var countPerday: Int
     var score: Int
     var interval: [String: [Int]]
+    var time: [String]
     @Relationship(deleteRule: .cascade, inverse: \DayStruct.habit) var checkedInDays = [DayStruct]()
     
     // Создание новой привычки
-    init(name: String, creationDate: String, count: Int, interval: [String: [Int]]) {
+    init(name: String, creationDate: String, count: Int, interval: [String: [Int]], time: [String]) {
         self.name = name
         self.creationDate = creationDate
         self.isArchived = false
         self.countPerday = count
         self.score = 0
         self.interval = interval
+        self.time = time
     }
     
     init() {
@@ -35,10 +37,11 @@ final class Habit {
         self.countPerday = 1
         self.score = 0
         self.interval = ["daily": []]
+        self.time = ["00-00"]
     }
     
     // для превью
-    init(name: String, creationDate: String, count: Int, interval: [String: [Int]], checkedInDays: [DayStruct]) {
+    init(name: String, creationDate: String, count: Int, interval: [String: [Int]], checkedInDays: [DayStruct], time: [String]) {
         self.name = name
         self.creationDate = creationDate
         self.isArchived = false
@@ -46,6 +49,7 @@ final class Habit {
         self.score = 0
         self.interval = interval
         self.checkedInDays = checkedInDays
+        self.time = time
     }
     
     func todayScore() -> String {
@@ -143,10 +147,13 @@ final class Habit {
     
     func calculateScore() {
         var arr = checkedInDays.sorted(by: {$0.date > $1.date}).map{$0.state}
-        arr.removeFirst()
+        let first = arr.removeFirst()
         var count = 0
         for state in arr {
             if state == "unchecked" {
+                if first == "checked" {
+                    count += 1
+                }
                 score = count
                 return
             } else if state == "checked" {

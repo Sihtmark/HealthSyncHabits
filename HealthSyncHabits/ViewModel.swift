@@ -18,6 +18,12 @@ extension Date {
         dateFormatter.dateFormat = "yyyy-MM-dd"
         return dateFormatter.string(from: self)
     }
+    
+    func timeToString() -> String {
+        let dateformatter = DateFormatter()
+        dateformatter.dateFormat = "HH-mm"
+        return dateformatter.string(from: self)
+    }
 }
 
 extension String {
