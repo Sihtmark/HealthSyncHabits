@@ -193,6 +193,9 @@ final class Habit {
                 count += 1
             }
         }
+        if first == "checked" {
+            count += 1
+        }
         score = count
     }
 }

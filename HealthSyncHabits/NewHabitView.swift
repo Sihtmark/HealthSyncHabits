@@ -188,6 +188,7 @@ struct NewHabitView: View {
                     .disabled(name.count < 3 || habits.contains(where: {$0.name == name}) || countPerDay < 1 || (pickedInterval == .byWeek && pickedWeekDays.isEmpty) || (pickedInterval == .custom && (activeDaysCount == 0 || offDaysCount == 0)))
                 }
             }
+            .scrollDismissesKeyboard(.immediately)
             .onChange(of: countPerDay) { oldValue, newValue in
                 if oldValue < newValue {
                     for e in 0..<(newValue - oldValue) {

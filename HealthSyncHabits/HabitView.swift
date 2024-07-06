@@ -79,6 +79,7 @@ struct HabitView: View {
                 }
             }
         }
+        .scrollDismissesKeyboard(.immediately)
     }
 }
 
