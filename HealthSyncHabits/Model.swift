@@ -9,6 +9,29 @@ import SwiftUI
 import SwiftData
 
 @Model
+final class UserSettings {
+    var totalReward: Double
+    var ledger: [LedgerEntry]
+    
+    init(totalReward: Double, ledger: [LedgerEntry]) {
+        self.totalReward = totalReward
+        self.ledger = ledger
+    }
+}
+
+@Model class LedgerEntry {
+    var id: String
+    var date: String
+    var amount: Double
+    
+    init(id: String, date: String, amount: Double) {
+        self.id = id
+        self.date = date
+        self.amount = amount
+    }
+}
+
+@Model
 final class Habit {
     @Attribute(.unique) var name: String
     var creationDate: String
@@ -17,10 +40,12 @@ final class Habit {
     var score: Int
     var interval: [String: [Int]]
     var time: [String]
+    var reward: Double?
+    var bigReward: Double?
     @Relationship(deleteRule: .cascade, inverse: \DayStruct.habit) var checkedInDays = [DayStruct]()
     
     // Создание новой привычки
-    init(name: String, creationDate: String, count: Int, interval: [String: [Int]], time: [String]) {
+    init(name: String, creationDate: String, count: Int, interval: [String: [Int]], time: [String], reward: Double?, bigReward: Double?) {
         self.name = name
         self.creationDate = creationDate
         self.isArchived = false
@@ -28,6 +53,8 @@ final class Habit {
         self.score = 0
         self.interval = interval
         self.time = time
+        self.reward = reward
+        self.bigReward = bigReward
     }
     
     init() {
@@ -38,6 +65,8 @@ final class Habit {
         self.score = 0
         self.interval = ["daily": []]
         self.time = ["00-00"]
+        self.reward = 0.1
+        self.bigReward = 5.0
     }
     
     // для превью
@@ -50,6 +79,8 @@ final class Habit {
         self.interval = interval
         self.checkedInDays = checkedInDays
         self.time = time
+        self.reward = 0.3
+        self.bigReward = 5.0
     }
     
     func todayScore() -> String {
@@ -70,7 +101,7 @@ final class Habit {
                 return .green
             }
         }
-        return .red
+        return .orange
     }
     
     func addRep() {
@@ -122,6 +153,7 @@ final class Habit {
     func checkFromUnCheck() {
         let today = Date().convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
+            checkedInDays[index].count = countPerday
             checkedInDays[index].state = "checked"
         }
     }
@@ -129,11 +161,12 @@ final class Habit {
     func uncheckFromSkiped() {
         let today = Date().convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
+            checkedInDays[index].count = 0
             checkedInDays[index].state = "unchecked"
         }
     }
     
-    func AddRepAndReplace() {
+    func addRepAndReplace() {
         let today = Date().convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
             checkedInDays[index].count += 1
@@ -188,9 +221,4 @@ final class DayStruct {
     func replaceStatus(with newState: String) {
         state = newState
     }
-}
-
-struct Setings {
-    var day: String
-    var beginingTime: String
 }

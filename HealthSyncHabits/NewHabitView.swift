@@ -23,7 +23,10 @@ struct NewHabitView: View {
     @State private var pickerDate = Date()
     @State private var countPerDay = 1
     @State private var showTimeSection = false
+    @State private var showRewardSection = false
     @State private var timeArray = ["00-00"]
+    @State private var smallReward = 0.3
+    @State private var bigReward = 5.0
     
     // Interval
     @State private var pickedInterval: Interval = .daily
@@ -31,6 +34,7 @@ struct NewHabitView: View {
     @State private var pickedWeekDays = [Int]()
     @State private var activeDaysCount = 1
     @State private var offDaysCount = 1
+    
     
     var body: some View {
         NavigationStack {
@@ -54,29 +58,6 @@ struct NewHabitView: View {
                 }
                 Section {
                     DatePicker("Starts from", selection: $pickerDate, displayedComponents: .date)
-                }
-                Section {
-                    Picker("Reps per day:", selection: $countPerDay) {
-                        ForEach(0..<101) { index in
-                            Text(String(index))
-                                .tag(index)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    Toggle("Set time", isOn: $showTimeSection)
-                }
-                if showTimeSection {
-                    Section {
-                        ForEach(Array(timeArray.enumerated()), id: \.offset) { key, value in
-                            TimePickerCell(index: key + 1) { time in
-                                timeArray[key] = time
-                            }
-                        }
-                    } footer: {
-                        Text("Choose time for each rep")
-                    }
-                }
-                Section {
                     Picker("Day interval:", selection: $pickedInterval) {
                         ForEach(Interval.allCases, id: \.self) { interval in
                             Text(interval.rawValue)
@@ -125,6 +106,82 @@ struct NewHabitView: View {
                     }
                 }
                 Section {
+                    Picker("Reps per day:", selection: $countPerDay) {
+                        ForEach(0..<101) { index in
+                            Text(String(index))
+                                .tag(index)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    Toggle("Set time", isOn: $showTimeSection)
+                    Toggle("Set reward", isOn: $showRewardSection)
+                }
+                if showTimeSection {
+                    Section {
+                        ForEach(Array(timeArray.enumerated()), id: \.offset) { key, value in
+                            TimePickerCell(index: key + 1) { time in
+                                timeArray[key] = time
+                            }
+                        }
+                    } footer: {
+                        Text("Choose time for each rep")
+                    }
+                }
+                if showRewardSection {
+                    Section {
+                        VStack(alignment: .leading) {
+                            Text("For each rep:   ")
+                            +
+                            Text(String(format: "%.2f", smallReward))
+                                .foregroundStyle(.cyan)
+                                .font(.title3)
+                                .fontWeight(.medium)
+                            +
+                            Text(" €")
+                                .foregroundStyle(.cyan)
+                                .font(.title3)
+                                .fontWeight(.medium)
+                            Slider(value: $smallReward, in: 0.1...3, step: 0.1) {
+                                Text("Slider value: \(smallReward)")
+                            } minimumValueLabel: {
+                                Image(systemName: "0.square")
+                                    .font(.title)
+                                    .foregroundStyle(.cyan)
+                            } maximumValueLabel: {
+                                Image(systemName: "3.square.fill")
+                                    .font(.title)
+                                    .foregroundStyle(.cyan)
+                            }
+                            .accentColor(.cyan)
+                        }
+                        VStack(alignment: .leading) {
+                            Text("For every 21 days:   ")
+                            +
+                            Text(String(format: "%.2f", bigReward))
+                                .foregroundStyle(.orange)
+                                .font(.title3)
+                                .fontWeight(.medium)
+                            +
+                            Text(" €")
+                                .foregroundStyle(.orange)
+                                .font(.title3)
+                                .fontWeight(.medium)
+                            Slider(value: $bigReward, in: 3...30, step: 1.0) {
+                                Text("Slider value: \(bigReward)")
+                            } minimumValueLabel: {
+                                Image(systemName: "3.square")
+                                    .font(.title)
+                                    .foregroundStyle(.orange)
+                            } maximumValueLabel: {
+                                Image(systemName: "30.square.fill")
+                                    .font(.title)
+                                    .foregroundStyle(.orange)
+                            }
+                            .accentColor(.orange)
+                        }
+                    }
+                }
+                Section {
                     Button("Create new habit") {
                         createNewHabit()
                     }
@@ -156,7 +213,15 @@ struct NewHabitView: View {
         } else if pickedInterval == .custom {
             interval = ["custom": [activeDaysCount, offDaysCount]]
         }
-        let habit = Habit(name: name, creationDate: pickerDate.convertToString(), count: countPerDay, interval: interval, time: timeArray)
+        let habit = Habit(
+            name: name,
+            creationDate: pickerDate.convertToString(),
+            count: countPerDay,
+            interval: interval,
+            time: timeArray,
+            reward: showRewardSection ? smallReward : nil,
+            bigReward: showRewardSection ? bigReward : nil
+        )
         modelContext.insert(habit)
         let newDaysStr = habit.creationDate.getDays(for: habit)
         var newDays = [DayStruct]()
