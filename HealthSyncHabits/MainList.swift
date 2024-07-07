@@ -16,8 +16,12 @@ struct MainList: View {
     @State private var showNewHabitSheet = false
     @State private var onAppOpening = true
     @State private var userSettings: UserSettings?
-    @State private var rewardUpdateAmount = 0.0
+//    @State private var rewardUpdateAmount = 0.0
     @State private var showRewardEditor = false
+    @State private var showChecked = false
+    @State private var showSkipped = false
+    @State private var rewardString = ""
+    @FocusState private var focus: Bool
     
     var body: some View {
         NavigationStack(path: $path) {
@@ -26,8 +30,12 @@ struct MainList: View {
                     rewardSlider
                 }
                 uncheckedSection
-                checkedSection
-                skipedSection
+                if showChecked {
+                    checkedSection
+                }
+                if showSkipped {
+                    skipedSection
+                }
             }
             .scrollDismissesKeyboard(.immediately)
             .sheet(isPresented: $showNewHabitSheet) {
@@ -39,7 +47,7 @@ struct MainList: View {
                 if let userSettings {
                     ToolbarItem(placement: .principal) {
                         HStack {
-                            Text("💰")
+                            Text("🏆")
                             +
                             Text(String(format: "%.2f", self.userSettings?.totalReward ?? 0.0))
                             +
@@ -61,6 +69,26 @@ struct MainList: View {
                         showNewHabitSheet.toggle()
                     } label: {
                         Label("Add Item", systemImage: "plus")
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button {
+                            withAnimation(.smooth) {
+                                showChecked.toggle()
+                            }
+                        } label: {
+                            Label("Completed", systemImage: showChecked ? "checkmark.circle" : "circle")
+                        }
+                        Button {
+                            withAnimation(.smooth) {
+                                showChecked.toggle()
+                            }
+                        } label: {
+                            Label("Skipped", systemImage: showSkipped ? "checkmark.circle" : "circle")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                     }
                 }
             }
@@ -90,38 +118,48 @@ struct MainList: View {
     }
     
     private var rewardSlider: some View {
-        VStack {
-            Button {
-            let newEntry = LedgerEntry(
-                id: UUID().uuidString,
-                date: Date().convertToString(),
-                amount: rewardUpdateAmount
-            )
-            modelContext.insert(newEntry)
-            self.userSettings?.ledger.append(newEntry)
-            userSettings?.totalReward -= rewardUpdateAmount
-            showRewardEditor.toggle()
-        } label: {
-            Text("Withdraw ")
-            +
-            Text(String(format: "%.2f", rewardUpdateAmount))
-            +
-            Text(" €")
-        }
-        .font(.title3)
-        .accentColor(.cyan)
-            Slider(value: $rewardUpdateAmount, in: 0...(userSettings?.totalReward ?? 0.0), step: 0.1) {
-                Text("Slider value: \(rewardUpdateAmount)")
-            } minimumValueLabel: {
-                Text("0")
-                    .font(.title)
-                    .foregroundStyle(.cyan)
-            } maximumValueLabel: {
-                Text(String(format: "%.0f", userSettings?.totalReward ?? 0.0))
-                    .font(.title)
-                    .foregroundStyle(.cyan)
+        Section {
+            HStack(spacing: 20) {
+                TextField("Add amount...", text: $rewardString)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.title3)
+                    .focused($focus, equals: true)
+                    .keyboardType(.decimalPad)
+                Button {
+                    withAnimation(.smooth) {
+                        focus = false
+                    }
+                    if let amount = Double(rewardString.replacingOccurrences(of: ",", with: ".")), amount <= userSettings?.totalReward ?? 0.0 {
+                        let newEntry = LedgerEntry(
+                            id: UUID().uuidString,
+                            date: Date().convertToString(),
+                            amount: amount
+                        )
+                        modelContext.insert(newEntry)
+                        self.userSettings?.ledger.append(newEntry)
+                        userSettings?.totalReward -= amount
+                        rewardString = ""
+                    }
+                    withAnimation(.smooth) {
+                        showRewardEditor.toggle()
+                    }
+                } label: {
+                    Text("Withdraw")
+                        .foregroundStyle(.white)
+                }
+                .disabled(Double(rewardString.replacingOccurrences(of: ",", with: ".")) ?? 0.0 > userSettings?.totalReward ?? 0.0 || Double(rewardString.replacingOccurrences(of: ",", with: ".")) ?? 0.0 == 0.0)
+                .font(.title3)
+                .buttonStyle(.borderedProminent)
             }
-            .accentColor(.cyan)
+        } footer: {
+            if Double(rewardString.replacingOccurrences(of: ",", with: ".")) ?? 0.0 > userSettings?.totalReward ?? 0.0 {
+                Text("⚠️ Max \(String(format: "%.2f", userSettings?.totalReward ?? 0.0)) € ‼️")
+                    .foregroundStyle(.red)
+            } else {
+                Text("Max \(String(format: "%.2f", userSettings?.totalReward ?? 0.0)) €")
+                    .foregroundStyle(.orange)
+            }
+            
         }
     }
     
