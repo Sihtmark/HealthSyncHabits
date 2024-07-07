@@ -31,6 +31,7 @@ struct HabitView: View {
     @State var pickedWeekDays: [Int]
     @State var activeDaysCount: Int
     @State var offDaysCount: Int
+    @State private var intervalDidChanged = false
     
     let dateRange: ClosedRange<Date> = {
         let calendar = Calendar.current
@@ -39,6 +40,17 @@ struct HabitView: View {
         ...
         Date()
     }()
+    
+    var habitUpdated: Bool {
+        return name != habit.name ||
+        pickerDate.convertToString() != habit.creationDate ||
+        countPerDay != habit.countPerday ||
+        timeArray != habit.time ||
+        smallReward != habit.reward ||
+        bigReward != habit.bigReward ||
+        pickedInterval != habit.interval.first?.key ||
+        intervalDidChanged
+    }
     
     var body: some View {
         List {
@@ -232,9 +244,19 @@ struct HabitView: View {
                 Button("Save") {
                     updateHabit()
                 }
+                .disabled(!habitUpdated)
             }
         }
         .scrollDismissesKeyboard(.immediately)
+        .onChange(of: pickedWeekDays, { oldValue, newValue in
+            intervalDidChanged = true
+        })
+        .onChange(of: activeDaysCount, { oldValue, newValue in
+            intervalDidChanged = true
+        })
+        .onChange(of: offDaysCount, { oldValue, newValue in
+            intervalDidChanged = true
+        })
         .onChange(of: countPerDay) { oldValue, newValue in
             if oldValue < newValue {
                 for e in 0..<(newValue - oldValue) {
