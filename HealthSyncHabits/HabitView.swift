@@ -23,6 +23,7 @@ struct HabitView: View {
     @State var smallReward: Double
     @State var bigReward: Double
     let statusArray = ["unchecked", "checked", "skiped"]
+    @State private var deleteAlert = false
     
     // Interval
     @State var pickedInterval: String
@@ -200,8 +201,7 @@ struct HabitView: View {
             }
             Section {
                 Button("Delete this habit", role: .destructive) {
-                    modelContext.delete(habit)
-                    dismiss()
+                    deleteAlert.toggle()
                 }
             }
             Section("History") {
@@ -270,6 +270,12 @@ struct HabitView: View {
                     timeArray.remove(at: count)
                     count -= 1
                 }
+            }
+        }
+        .alert("Are you shure you want to delete this habit?", isPresented: $deleteAlert) {
+            Button("Delete", role: .destructive) {
+                modelContext.delete(habit)
+                dismiss()
             }
         }
     }
