@@ -205,19 +205,14 @@ final class DayStruct {
     var date: String
     var state: String
     var count: Int
+    var reward: Double?
     var habit: Habit?
     
-    init(habit: Habit) {
-        self.date = Date().convertToString()
-        self.state = "unchecked"
-        self.count = 0
-        self.habit = habit
-    }
-    
-    init(day: String, habit: Habit, state: String = "unchecked") {
+    init(day: String, habit: Habit, state: String = "unchecked", reward: Double?) {
         self.date = day
         self.state = state
         self.count = 0
+        self.reward = reward
         self.habit = habit
     }
     

@@ -8,12 +8,6 @@
 import SwiftUI
 import SwiftData
 
-enum Interval: String, Equatable, CaseIterable {
-    case daily = "daily"
-    case byWeek = "by week"
-    case custom = "custom"
-}
-
 struct NewHabitView: View {
     @Environment(ViewModel.self) private var vm
     @Environment(\.modelContext) private var modelContext
@@ -29,12 +23,20 @@ struct NewHabitView: View {
     @State private var bigReward = 5.0
     
     // Interval
-    @State private var pickedInterval: Interval = .daily
+    @State private var pickedInterval = "daily"
+    let intervalArray = ["daily", "by week", "custom"]
     let weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     @State private var pickedWeekDays = [Int]()
     @State private var activeDaysCount = 1
     @State private var offDaysCount = 1
     
+    let dateRange: ClosedRange<Date> = {
+        let calendar = Calendar.current
+        let startComponents = DateComponents(year: 2021, month: 1, day: 1)
+        return calendar.date(from:startComponents)!
+        ...
+        Date()
+    }()
     
     var body: some View {
         NavigationStack {
@@ -57,15 +59,15 @@ struct NewHabitView: View {
                     }
                 }
                 Section {
-                    DatePicker("Starts from", selection: $pickerDate, displayedComponents: .date)
+                    DatePicker("Starts from", selection: $pickerDate, in: dateRange, displayedComponents: .date)
                     Picker("Day interval:", selection: $pickedInterval) {
-                        ForEach(Interval.allCases, id: \.self) { interval in
-                            Text(interval.rawValue)
+                        ForEach(intervalArray, id: \.self) { interval in
+                            Text(interval)
                                 .tag(interval)
                         }
                     }
                     .pickerStyle(.menu)
-                    if pickedInterval == .byWeek {
+                    if pickedInterval == "by week" {
                         HStack(spacing: 0) {
                             ForEach(Array(weekDays.enumerated()), id: \.element) { index, day in
                                 ZStack {
@@ -88,7 +90,7 @@ struct NewHabitView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 40)
-                    } else if pickedInterval == .custom {
+                    } else if pickedInterval == "custom" {
                         Picker("Active days in a row:", selection: $activeDaysCount) {
                             ForEach(0..<101) { index in
                                 Text(String(index))
@@ -184,8 +186,9 @@ struct NewHabitView: View {
                 Section {
                     Button("Create new habit") {
                         createNewHabit()
+                        dismiss()
                     }
-                    .disabled(name.count < 3 || habits.contains(where: {$0.name == name}) || countPerDay < 1 || (pickedInterval == .byWeek && pickedWeekDays.isEmpty) || (pickedInterval == .custom && (activeDaysCount == 0 || offDaysCount == 0)))
+                    .disabled(name.count < 3 || habits.contains(where: {$0.name == name}) || countPerDay < 1 || (pickedInterval == "by week" && pickedWeekDays.isEmpty) || (pickedInterval == "custom" && (activeDaysCount == 0 || offDaysCount == 0)))
                 }
             }
             .scrollDismissesKeyboard(.immediately)
@@ -207,11 +210,11 @@ struct NewHabitView: View {
     
     private func createNewHabit() {
         var interval: [String: [Int]] = [:]
-        if pickedInterval == .daily {
+        if pickedInterval == "daily" {
             interval = ["daily": []]
-        } else if pickedInterval == .byWeek {
+        } else if pickedInterval == "by week" {
             interval = ["by week": pickedWeekDays]
-        } else if pickedInterval == .custom {
+        } else if pickedInterval == "custom" {
             interval = ["custom": [activeDaysCount, offDaysCount]]
         }
         let habit = Habit(
@@ -224,18 +227,18 @@ struct NewHabitView: View {
             bigReward: showRewardSection ? bigReward : nil
         )
         modelContext.insert(habit)
-        let newDaysStr = habit.creationDate.getDays(for: habit)
+        let newDaysStr = vm.getDays(for: habit)
         var newDays = [DayStruct]()
         for dayStr in newDaysStr {
             guard let interval = habit.interval.first else {return}
             if interval.key == "by week" {
                 guard let dayOfWeek = dayStr.dayOfWeek() else {return}
                 if interval.value.contains(dayOfWeek) {
-                    let day = DayStruct(day: dayStr, habit: habit, state: "unchecked")
+                    let day = DayStruct(day: dayStr, habit: habit, state: "unchecked", reward: showRewardSection && dayStr == Date().convertToString() ? smallReward : nil)
                     newDays.append(day)
                     modelContext.insert(day)
                 } else {
-                    let day = DayStruct(day: dayStr, habit: habit, state: "skiped")
+                    let day = DayStruct(day: dayStr, habit: habit, state: "skiped", reward: showRewardSection && dayStr == Date().convertToString() ? smallReward : nil)
                     newDays.append(day)
                     modelContext.insert(day)
                 }
@@ -244,17 +247,16 @@ struct NewHabitView: View {
                 let activeDaysCount = interval.value[0]
                 let offDaysCount = interval.value[1]
                 let state = dayStr.isWorkingDay(from: habit.creationDate, active: activeDaysCount, off: offDaysCount)
-                let day = DayStruct(day: dayStr, habit: habit, state: state)
+                let day = DayStruct(day: dayStr, habit: habit, state: state, reward: showRewardSection && dayStr == Date().convertToString() ? smallReward : nil)
                 newDays.append(day)
                 modelContext.insert(day)
             } else {
-                let day = DayStruct(day: dayStr, habit: habit)
+                let day = DayStruct(day: dayStr, habit: habit, reward: showRewardSection && dayStr == Date().convertToString() ? smallReward : nil)
                 newDays.append(day)
                 modelContext.insert(day)
             }
         }
         habit.checkedInDays = newDays
-        dismiss()
     }
 }
 

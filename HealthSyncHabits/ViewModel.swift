@@ -9,7 +9,60 @@ import SwiftUI
 import SwiftData
 
 @Observable final class ViewModel {
+    func getDays(for habit: Habit, changing: Date? = nil) -> [String] {
+        guard let timeZone = TimeZone(identifier: "GMT") else { return [] }
+        var habitCreationDate = habit.creationDate.convertToDate()
+        var dates = [String]()
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        var endDate: Date
+        if var changing {
+            let newCreationDate = changing.convertToString()
+            let date = calendar.startOfDay(for: habitCreationDate)
+            endDate = calendar.date(byAdding: .day, value: -1, to: date) ?? date
+            
+            while changing <= endDate {
+                let dateStr = changing.convertToString()
+                if !habit.checkedInDays.contains(where: {$0.date == dateStr}) {
+                    dates.append(dateStr)
+                }
+                if let nextDate = calendar.date(byAdding: .day, value: 1, to: changing) {
+                    changing = nextDate
+                } else {
+                    break
+                }
+            }
+        } else {
+            endDate = calendar.startOfDay(for: Date())
+            while habitCreationDate <= endDate {
+                let dateStr = habitCreationDate.convertToString()
+                if !habit.checkedInDays.contains(where: {$0.date == dateStr}) {
+                    dates.append(dateStr)
+                }
+                if let nextDate = calendar.date(byAdding: .day, value: 1, to: habitCreationDate) {
+                    habitCreationDate = nextDate
+                } else {
+                    break
+                }
+            }
+        }
+        return dates
+    }
     
+    private func scoreColor(score: Int) -> Color {
+        switch score {
+        case 0..<7:
+            return .orange
+        case 7..<14:
+            return .green
+        case 14..<21:
+            return .cyan
+        case 21..<28:
+            return .blue
+        default:
+            return .pink
+        }
+    }
 }
 
 extension Date {
@@ -51,27 +104,6 @@ extension String {
         }
     }
     
-    func getDays(for habit: Habit) -> [String] {
-        guard let timeZone = TimeZone(identifier: "GMT") else { return [] }
-        var currentDate = self.convertToDate()
-        var dates = [String]()
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = timeZone
-        let endDate = calendar.startOfDay(for: Date())
-        while currentDate <= endDate {
-            let dateStr = currentDate.convertToString()
-            if !habit.checkedInDays.contains(where: {$0.date == dateStr}) {
-                dates.append(dateStr)
-            }
-            if let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate) {
-                currentDate = nextDate
-            } else {
-                break
-            }
-        }
-        return dates
-    }
-    
     func isWorkingDay(from creationDate: String, active: Int, off: Int) -> String {
         guard let timeZone = TimeZone(identifier: "GMT") else { return "unchecked"}
         let startDate = creationDate.convertToDate() // Your first day of work
@@ -80,5 +112,13 @@ extension String {
         let diff = calendar.dateComponents([.day], from: startDate, to: self.convertToDate()).day!
         let mod = diff % (active + off)
         return mod < active ? "unchecked" : "skiped"
+    }
+}
+
+extension Dictionary {
+    mutating func switchKey(fromKey: Key, toKey: Key) {
+        if let entry = removeValue(forKey: fromKey) {
+            self[toKey] = entry
+        }
     }
 }

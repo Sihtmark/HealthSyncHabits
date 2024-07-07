@@ -12,7 +12,7 @@ import SwiftData
 struct HealthSyncHabitsApp: App {
     
     @State private var vm = ViewModel()
-
+    
     var body: some Scene {
         WindowGroup {
             MainList()

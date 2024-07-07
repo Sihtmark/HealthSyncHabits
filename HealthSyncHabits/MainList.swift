@@ -65,7 +65,23 @@ struct MainList: View {
                 }
             }
             .navigationDestination(for: Habit.self) { habit in
-                HabitView(habit: habit, pickerDate: habit.creationDate.convertToDate())
+                HabitView(
+                    habit: habit,
+                    name: habit.name,
+                    pickerDate: habit.creationDate.convertToDate(),
+                    countPerDay: habit.countPerday,
+                    showTimeSection: true,
+                    showRewardSection: habit.reward != nil,
+                    timeArray: habit.time,
+                    smallReward: habit.reward ?? 0.3,
+                    bigReward: habit.bigReward ?? 5.0,
+                    pickedInterval: habit.interval.first?.key ?? "daily",
+                    pickedWeekDays: habit.interval.first?.key == "by week" ? habit.interval.first?.value ?? [] : [],
+                    activeDaysCount: habit.interval.first?.key == "custom" ?
+                    habit.interval.first?.value[0] ?? 1 : 1,
+                    offDaysCount: habit.interval.first?.key == "custom" ?
+                    habit.interval.first?.value[1] ?? 1 : 1
+                )
             }
             .onAppear {
                 onAppearMethod()
@@ -331,7 +347,7 @@ struct MainList: View {
         })
         habits.forEach { habit in
             habit.checkedInDays.forEach { dayStruct in
-                if let reward = habit.reward {
+                if let reward = dayStruct.reward {
                     userSettings?.totalReward += (reward * Double(dayStruct.count))
                 }
             }
@@ -340,17 +356,17 @@ struct MainList: View {
     
     private func appendTodayStruct() {
         for (i, habit) in habits.enumerated() {
-            let newDays = habit.creationDate.getDays(for: habit)
+            let newDays = vm.getDays(for: habit)
             for dayStr in newDays {
                 guard let interval = habit.interval.first else {return}
                 if interval.key == "by week" {
                     guard let dayOfWeek = dayStr.dayOfWeek() else {return}
                     if interval.value.contains(dayOfWeek) {
-                        let day = DayStruct(day: dayStr, habit: habit, state: "unchecked")
+                        let day = DayStruct(day: dayStr, habit: habit, state: "unchecked", reward: habit.reward)
                         modelContext.insert(day)
                         habits[i].checkedInDays.append(day)
                     } else {
-                        let day = DayStruct(day: dayStr, habit: habit, state: "skiped")
+                        let day = DayStruct(day: dayStr, habit: habit, state: "skiped", reward: habit.reward)
                         modelContext.insert(day)
                         habits[i].checkedInDays.append(day)
                     }
@@ -359,31 +375,16 @@ struct MainList: View {
                     let activeDaysCount = interval.value[0]
                     let offDaysCount = interval.value[1]
                     let state = dayStr.isWorkingDay(from: habit.creationDate, active: activeDaysCount, off: offDaysCount)
-                    let day = DayStruct(day: dayStr, habit: habit, state: state)
+                    let day = DayStruct(day: dayStr, habit: habit, state: state, reward: habit.reward)
                     modelContext.insert(day)
                     habits[i].checkedInDays.append(day)
                 } else {
-                    let day = DayStruct(day: dayStr, habit: habit)
+                    let day = DayStruct(day: dayStr, habit: habit, reward: habit.reward)
                     modelContext.insert(day)
                     habits[i].checkedInDays.append(day)
                 }
             }
             habit.calculateScore()
-        }
-    }
-    
-    private func scoreColor(score: Int) -> Color {
-        switch score {
-        case 0..<7:
-            return .orange
-        case 7..<14:
-            return .green
-        case 14..<21:
-            return .cyan
-        case 21..<28:
-            return .blue
-        default:
-            return .pink
         }
     }
 }
