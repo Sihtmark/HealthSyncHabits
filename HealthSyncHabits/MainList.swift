@@ -91,6 +91,25 @@ struct MainList: View {
     
     private var rewardSlider: some View {
         VStack {
+            Button {
+            let newEntry = LedgerEntry(
+                id: UUID().uuidString,
+                date: Date().convertToString(),
+                amount: rewardUpdateAmount
+            )
+            modelContext.insert(newEntry)
+            self.userSettings?.ledger.append(newEntry)
+            userSettings?.totalReward -= rewardUpdateAmount
+            showRewardEditor.toggle()
+        } label: {
+            Text("Withdraw ")
+            +
+            Text(String(format: "%.2f", rewardUpdateAmount))
+            +
+            Text(" €")
+        }
+        .font(.title3)
+        .accentColor(.cyan)
             Slider(value: $rewardUpdateAmount, in: 0...(userSettings?.totalReward ?? 0.0), step: 0.1) {
                 Text("Slider value: \(rewardUpdateAmount)")
             } minimumValueLabel: {
@@ -102,26 +121,6 @@ struct MainList: View {
                     .font(.title)
                     .foregroundStyle(.cyan)
             }
-            .accentColor(.cyan)
-            Button {
-                let newEntry = LedgerEntry(
-                    id: UUID().uuidString,
-                    date: Date().convertToString(),
-                    amount: rewardUpdateAmount
-                )
-                modelContext.insert(newEntry)
-                self.userSettings?.ledger.append(newEntry)
-                self.userSettings?.totalReward = 0.0
-                userSettings?.totalReward -= rewardUpdateAmount
-                showRewardEditor.toggle()
-            } label: {
-                Text("Withdraw ")
-                +
-                Text(String(format: "%.2f", rewardUpdateAmount))
-                +
-                Text(" €")
-            }
-            .font(.title3)
             .accentColor(.cyan)
         }
     }
