@@ -57,18 +57,20 @@ struct HabitView: View {
             Section {
                 TextField("Add your habit name here...", text: $name)
             } footer: {
-                if habits.contains(where: {$0.name == name}) && habit.name != name  {
-                    Text("⚠️There is one habit with the same name already, try another one")
-                        .foregroundStyle(.red)
-                        .font(.caption)
-                } else if name.count >= 3 {
-                    Text("✅This name can be used")
-                        .foregroundStyle(.green)
-                        .font(.caption)
-                } else if name.count < 3 {
-                    Text("⚠️Min name length is three characters")
-                        .foregroundStyle(.orange)
-                        .font(.caption)
+                if habit.name != name {
+                    if habits.contains(where: {$0.name == name}) && habit.name != name  {
+                        Text("⚠️There is one habit with the same name already, try another one")
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                    } else if name.count >= 3 {
+                        Text("✅This name can be used")
+                            .foregroundStyle(.green)
+                            .font(.caption)
+                    } else if name.count < 3 {
+                        Text("⚠️Min name length is three characters")
+                            .foregroundStyle(.orange)
+                            .font(.caption)
+                    }
                 }
             }
             Section {
