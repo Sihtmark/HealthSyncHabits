@@ -213,16 +213,18 @@ struct MainList: View {
                         Image(systemName: "checkmark.seal.fill")
                     }
                     .tint(.green)
-                    Button {
-                        habit.removeRep()
-                        if let reward = habit.reward {
-                            userSettings?.totalReward += reward
+                    if let today = habit.checkedInDays.first(where: {$0.date == Date().convertToString()}), today.count > 0 {
+                        Button {
+                            habit.removeRep()
+                            if let reward = habit.reward {
+                                userSettings?.totalReward -= reward
+                            }
+                            habit.calculateScore()
+                        } label: {
+                            Image(systemName: "minus.circle")
                         }
-                        habit.calculateScore()
-                    } label: {
-                        Image(systemName: "minus.circle")
+                        .tint(.orange)
                     }
-                    .tint(.orange)
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                     Button("Hide") {
@@ -285,16 +287,18 @@ struct MainList: View {
                         Image(systemName: "checkmark.seal.fill")
                     }
                     .tint(.green)
-                    Button {
-                        habit.removeRep()
-                        if let reward = habit.reward {
-                            userSettings?.totalReward -= reward
+                    if let today = habit.checkedInDays.first(where: {$0.date == Date().convertToString()}), today.count > 0 {
+                        Button {
+                            habit.removeRep()
+                            if let reward = habit.reward {
+                                userSettings?.totalReward -= reward
+                            }
+                            habit.calculateScore()
+                        } label: {
+                            Image(systemName: "minus.circle")
                         }
-                        habit.calculateScore()
-                    } label: {
-                        Image(systemName: "minus.circle")
+                        .tint(.orange)
                     }
-                    .tint(.orange)
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                     if habit.canSkip() {
@@ -409,16 +413,18 @@ struct MainList: View {
                         Image(systemName: "checkmark.seal.fill")
                     }
                     .tint(.green)
-                    Button {
-                        habit.removeRep()
-                        if let reward = habit.reward {
-                            userSettings?.totalReward += reward
+                    if let today = habit.checkedInDays.first(where: {$0.date == Date().convertToString()}), today.count > 0 {
+                        Button {
+                            habit.removeRep()
+                            if let reward = habit.reward {
+                                userSettings?.totalReward -= reward
+                            }
+                            habit.calculateScore()
+                        } label: {
+                            Image(systemName: "minus.circle")
                         }
-                        habit.calculateScore()
-                    } label: {
-                        Image(systemName: "minus.circle")
+                        .tint(.orange)
                     }
-                    .tint(.orange)
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                     Button("Unhide") {
