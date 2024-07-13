@@ -144,6 +144,19 @@ extension String {
         return arr[mod] == 1 
     }
     
+    func convertTime() -> Date? {
+        let today = Date()
+        let calendar = Calendar.current
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm"
+        guard let time = timeFormatter.date(from: self) else { return nil }
+        let timeComponents = calendar.dateComponents([.hour, .minute], from: time)
+        var dateComponents = calendar.dateComponents([.year, .month, .day], from: today)
+        dateComponents.hour = timeComponents.hour
+        dateComponents.minute = timeComponents.minute
+        return calendar.date(from: dateComponents)
+    }
+    
     func userFriendlyDate() -> String? {
         let inputFormatter = DateFormatter()
         inputFormatter.dateFormat = "yyyy-MM-dd"

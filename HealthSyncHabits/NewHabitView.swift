@@ -163,7 +163,7 @@ struct NewHabitView: View {
                 if showTimeSection {
                     Section {
                         ForEach(Array(timeArray.enumerated()), id: \.offset) { key, value in
-                            TimePickerCell(index: key + 1) { time in
+                            TimePickerCell(time: value.convertTime() ?? Date(), index: key + 1) { time in
                                 timeArray[key] = time
                             }
                         }
@@ -332,7 +332,7 @@ struct NewHabitView: View {
 }
 
 struct TimePickerCell: View {
-    @State private var time = Date()
+    @State var time: Date
     let index: Int
     let onDismiss: (String) -> Void
     

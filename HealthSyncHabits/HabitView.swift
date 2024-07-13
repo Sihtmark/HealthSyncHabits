@@ -59,230 +59,17 @@ struct HabitView: View {
     
     var body: some View {
         List {
-            Section {
-                TextField("Add your habit name here...", text: $name)
-            } footer: {
-                if habit.name != name {
-                    if habits.contains(where: {$0.name == name}) && habit.name != name  {
-                        Text("⚠️There is one habit with the same name already, try another one")
-                            .foregroundStyle(.red)
-                            .font(.caption)
-                    } else if name.count >= 3 {
-                        Text("✅This name can be used")
-                            .foregroundStyle(.green)
-                            .font(.caption)
-                    } else if name.count < 3 {
-                        Text("⚠️Min name length is three characters")
-                            .foregroundStyle(.orange)
-                            .font(.caption)
-                    }
-                }
-            }
-            Section {
-                DatePicker("Starts from:", selection: $pickerDate, in: dateRange, displayedComponents: .date)
-                Picker("Day interval:", selection: $pickedInterval) {
-                    ForEach(intervalArray, id: \.self) { interval in
-                        Text(interval)
-                            .tag(interval)
-                    }
-                }
-                .pickerStyle(.menu)
-                if pickedInterval == "by week" {
-                    HStack(spacing: 0) {
-                        ForEach(Array(weekDays.enumerated()), id: \.element) { index, day in
-                            ZStack {
-                                pickedWeekDays.contains(index) ? Color.blue : Color.black.opacity(0.001)
-                                Text(day)
-                                    .foregroundStyle(pickedWeekDays.contains(index) ? .white : .primary)
-                                    .onTapGesture {
-                                        if pickedWeekDays.contains(index) {
-                                            pickedWeekDays.removeAll(where: {$0 == (index)})
-                                        } else {
-                                            pickedWeekDays.append(index)
-                                        }
-                                    }
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            if index != 6 {
-                                Divider()
-                            }
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 40)
-                } else if pickedInterval == "custom" {
-                    Picker("Active days in a row:", selection: $activeDaysCount) {
-                        ForEach(0..<101) { index in
-                            Text(String(index))
-                                .tag(index)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    Picker("Off days in a row:", selection: $offDaysCount) {
-                        ForEach(0..<101) { index in
-                            Text(String(index))
-                                .tag(index)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                } else if pickedInterval == "transformer" {
-                    VStack {
-                        Picker("Total days in one set:", selection: $transformerCount) {
-                            ForEach(5..<101) { index in
-                                Text(String(index))
-                                    .tag(index)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        ScrollView(.horizontal) {
-                            HStack {
-                                ForEach(Array(transformerArray.enumerated()), id: \.offset) { index, value in
-                                    Button {
-                                        transformerArray[index] = value == 0 ? 1 : 0
-                                    } label: {
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 6)
-                                                .fill(value == 1 ? Color.accentColor : Color.orange.opacity(0.4))
-                                                .frame(width: 50, height: 40)
-                                            Text("\(index + 1)")
-                                                .font(.title2)
-                                                .fontWeight(.bold)
-                                        }
-                                    }
-                                    .foregroundStyle(.white)
-                                }
-                            }
-                        }
-                        .scrollIndicators(.hidden)
-                        .scrollClipDisabled()
-                    }
-                }
-                HStack {
-                    Picker("Can skip once in:", selection: $skipDayCount) {
-                        ForEach(0..<101) { index in
-                            Text("\(index) days").tag(index)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                }
-            }
-            Section {
-                Picker("Reps per day:", selection: $countPerDay) {
-                    ForEach(0..<101) { index in
-                        Text(String(index))
-                            .tag(index)
-                    }
-                }
-                .pickerStyle(.menu)
-                Toggle("Set time", isOn: $showTimeSection)
-                Toggle("Set reward", isOn: $showRewardSection)
-            }
+            nameSection
+            dateSection
+            toggleSection
             if showTimeSection {
-                Section {
-                    ForEach(Array(timeArray.enumerated()), id: \.offset) { key, value in
-                        TimePickerCell(index: key + 1) { time in
-                            timeArray[key] = time
-                        }
-                    }
-                } footer: {
-                    Text("Choose time for each rep")
-                }
+                timeSection
             }
             if showRewardSection {
-                Section {
-                    VStack(alignment: .leading) {
-                        Text("For each rep:   ")
-                        +
-                        Text(String(format: "%.2f", smallReward))
-                            .foregroundStyle(.cyan)
-                            .font(.title3)
-                            .fontWeight(.medium)
-                        +
-                        Text(" €")
-                            .foregroundStyle(.cyan)
-                            .font(.title3)
-                            .fontWeight(.medium)
-                        Slider(value: $smallReward, in: 0.1...3, step: 0.1) {
-                            Text("Slider value: \(smallReward)")
-                        } minimumValueLabel: {
-                            Image(systemName: "0.square")
-                                .font(.title)
-                                .foregroundStyle(.cyan)
-                        } maximumValueLabel: {
-                            Image(systemName: "3.square.fill")
-                                .font(.title)
-                                .foregroundStyle(.cyan)
-                        }
-                        .accentColor(.cyan)
-                    }
-                    VStack(alignment: .leading) {
-                        Text("For every 21 days:   ")
-                        +
-                        Text(String(format: "%.2f", bigReward))
-                            .foregroundStyle(.orange)
-                            .font(.title3)
-                            .fontWeight(.medium)
-                        +
-                        Text(" €")
-                            .foregroundStyle(.orange)
-                            .font(.title3)
-                            .fontWeight(.medium)
-                        Slider(value: $bigReward, in: 3...30, step: 1.0) {
-                            Text("Slider value: \(bigReward)")
-                        } minimumValueLabel: {
-                            Image(systemName: "3.square")
-                                .font(.title)
-                                .foregroundStyle(.orange)
-                        } maximumValueLabel: {
-                            Image(systemName: "30.square.fill")
-                                .font(.title)
-                                .foregroundStyle(.orange)
-                        }
-                        .accentColor(.orange)
-                    }
-                }
+                rewardSection
             }
-            Section {
-                Button("Delete this habit", role: .destructive) {
-                    deleteAlert.toggle()
-                }
-            }
-            Section("History") {
-                ForEach(habit.checkedInDays.sorted(by: {$0.date > $1.date}), id: \.self) { day in
-                    HStack {
-                        Text(day.date)
-                        Spacer()
-                        Text(day.state)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                if day.state != "skiped" {
-                                    Button("Skip") {
-                                        day.state = "skiped"
-                                        day.count = 0
-                                        habit.calculateScore()
-                                    }
-                                    .tint(.yellow)
-                                }
-                                if day.state != "checked" {
-                                    Button("Check") {
-                                        day.state = "checked"
-                                        day.count = habit.countPerday
-                                        habit.calculateScore()
-                                    }
-                                    .tint(.green)
-                                }
-                                if day.state != "unchecked" {
-                                    Button("Uncheck") {
-                                        day.state = "unchecked"
-                                        day.count = 0
-                                        habit.calculateScore()
-                                    }
-                                    .tint(.orange)
-                                }
-                            }
-                    }
-                }
-            }
+            deleteSection
+            historySection
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -315,6 +102,12 @@ struct HabitView: View {
                 }
             }
         }
+        .onChange(of: transformerCount, { oldValue, newValue in
+            intervalDidChanged = true
+        })
+        .onChange(of: transformerArray, { oldValue, newValue in
+            intervalDidChanged = true
+        })
         .onChange(of: transformerCount) { oldValue, newValue in
             if oldValue < newValue {
                 withAnimation {
@@ -401,6 +194,247 @@ struct HabitView: View {
         habit.reward = showRewardSection ? smallReward : nil
         habit.bigReward = showRewardSection ? bigReward : nil
         dismiss()
+    }
+    
+    var nameSection: some View {
+        Section {
+            TextField("Add your habit name here...", text: $name)
+        } footer: {
+            if habit.name != name {
+                if habits.contains(where: {$0.name == name}) && habit.name != name  {
+                    Text("⚠️There is one habit with the same name already, try another one")
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                } else if name.count >= 3 {
+                    Text("✅This name can be used")
+                        .foregroundStyle(.green)
+                        .font(.caption)
+                } else if name.count < 3 {
+                    Text("⚠️Min name length is three characters")
+                        .foregroundStyle(.orange)
+                        .font(.caption)
+                }
+            }
+        }
+    }
+    
+    var dateSection: some View {
+        Section {
+            DatePicker("Starts from:", selection: $pickerDate, in: dateRange, displayedComponents: .date)
+            Picker("Day interval:", selection: $pickedInterval) {
+                ForEach(intervalArray, id: \.self) { interval in
+                    Text(interval)
+                        .tag(interval)
+                }
+            }
+            .pickerStyle(.menu)
+            if pickedInterval == "by week" {
+                HStack(spacing: 0) {
+                    ForEach(Array(weekDays.enumerated()), id: \.element) { index, day in
+                        ZStack {
+                            pickedWeekDays.contains(index) ? Color.blue : Color.black.opacity(0.001)
+                            Text(day)
+                                .foregroundStyle(pickedWeekDays.contains(index) ? .white : .primary)
+                                .onTapGesture {
+                                    if pickedWeekDays.contains(index) {
+                                        pickedWeekDays.removeAll(where: {$0 == (index)})
+                                    } else {
+                                        pickedWeekDays.append(index)
+                                    }
+                                }
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        if index != 6 {
+                            Divider()
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 40)
+            } else if pickedInterval == "custom" {
+                Picker("Active days in a row:", selection: $activeDaysCount) {
+                    ForEach(0..<101) { index in
+                        Text(String(index))
+                            .tag(index)
+                    }
+                }
+                .pickerStyle(.menu)
+                Picker("Off days in a row:", selection: $offDaysCount) {
+                    ForEach(0..<101) { index in
+                        Text(String(index))
+                            .tag(index)
+                    }
+                }
+                .pickerStyle(.menu)
+            } else if pickedInterval == "transformer" {
+                VStack {
+                    Picker("Total days in one set:", selection: $transformerCount) {
+                        ForEach(5..<101) { index in
+                            Text(String(index))
+                                .tag(index)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    ScrollView(.horizontal) {
+                        HStack {
+                            ForEach(Array(transformerArray.enumerated()), id: \.offset) { index, value in
+                                Button {
+                                    transformerArray[index] = value == 0 ? 1 : 0
+                                } label: {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .fill(value == 1 ? Color.accentColor : Color.orange.opacity(0.4))
+                                            .frame(width: 50, height: 40)
+                                        Text("\(index + 1)")
+                                            .font(.title2)
+                                            .fontWeight(.bold)
+                                    }
+                                }
+                                .foregroundStyle(.white)
+                            }
+                        }
+                    }
+                    .scrollIndicators(.hidden)
+                    .scrollClipDisabled()
+                }
+            }
+            HStack {
+                Picker("Can skip once in:", selection: $skipDayCount) {
+                    ForEach(0..<101) { index in
+                        Text("\(index) days").tag(index)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+        }
+    }
+    
+    var toggleSection: some View {
+        Section {
+            Picker("Reps per day:", selection: $countPerDay) {
+                ForEach(0..<101) { index in
+                    Text(String(index))
+                        .tag(index)
+                }
+            }
+            .pickerStyle(.menu)
+            Toggle("Set time", isOn: $showTimeSection)
+            Toggle("Set reward", isOn: $showRewardSection)
+        }
+    }
+    
+    var timeSection: some View {
+        Section {
+            ForEach(Array(timeArray.enumerated()), id: \.offset) { key, value in
+                TimePickerCell(time: value.convertTime() ?? Date(), index: key + 1) { time in
+                    timeArray[key] = time
+                }
+            }
+        } footer: {
+            Text("Choose time for each rep")
+        }
+    }
+    
+    var rewardSection: some View {
+        Section {
+            VStack(alignment: .leading) {
+                Text("For each rep:   ")
+                +
+                Text(String(format: "%.2f", smallReward))
+                    .foregroundStyle(.cyan)
+                    .font(.title3)
+                    .fontWeight(.medium)
+                +
+                Text(" €")
+                    .foregroundStyle(.cyan)
+                    .font(.title3)
+                    .fontWeight(.medium)
+                Slider(value: $smallReward, in: 0.1...3, step: 0.1) {
+                    Text("Slider value: \(smallReward)")
+                } minimumValueLabel: {
+                    Image(systemName: "0.square")
+                        .font(.title)
+                        .foregroundStyle(.cyan)
+                } maximumValueLabel: {
+                    Image(systemName: "3.square.fill")
+                        .font(.title)
+                        .foregroundStyle(.cyan)
+                }
+                .accentColor(.cyan)
+            }
+            VStack(alignment: .leading) {
+                Text("For every 21 days:   ")
+                +
+                Text(String(format: "%.2f", bigReward))
+                    .foregroundStyle(.orange)
+                    .font(.title3)
+                    .fontWeight(.medium)
+                +
+                Text(" €")
+                    .foregroundStyle(.orange)
+                    .font(.title3)
+                    .fontWeight(.medium)
+                Slider(value: $bigReward, in: 3...30, step: 1.0) {
+                    Text("Slider value: \(bigReward)")
+                } minimumValueLabel: {
+                    Image(systemName: "3.square")
+                        .font(.title)
+                        .foregroundStyle(.orange)
+                } maximumValueLabel: {
+                    Image(systemName: "30.square.fill")
+                        .font(.title)
+                        .foregroundStyle(.orange)
+                }
+                .accentColor(.orange)
+            }
+        }
+    }
+    
+    var historySection: some View {
+        Section("History") {
+            ForEach(habit.checkedInDays.sorted(by: {$0.date > $1.date}), id: \.self) { day in
+                HStack {
+                    Text(day.date)
+                    Spacer()
+                    Text(day.state)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            if day.state != "skiped" {
+                                Button("Skip") {
+                                    day.state = "skiped"
+                                    day.count = 0
+                                    habit.calculateScore()
+                                }
+                                .tint(.yellow)
+                            }
+                            if day.state != "checked" {
+                                Button("Check") {
+                                    day.state = "checked"
+                                    day.count = habit.countPerday
+                                    habit.calculateScore()
+                                }
+                                .tint(.green)
+                            }
+                            if day.state != "unchecked" {
+                                Button("Uncheck") {
+                                    day.state = "unchecked"
+                                    day.count = 0
+                                    habit.calculateScore()
+                                }
+                                .tint(.orange)
+                            }
+                        }
+                }
+            }
+        }
+    }
+    
+    var deleteSection: some View {
+        Section {
+            Button("Delete this habit", role: .destructive) {
+                deleteAlert.toggle()
+            }
+        }
     }
 }
 
