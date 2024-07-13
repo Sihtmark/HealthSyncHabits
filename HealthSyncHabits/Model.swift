@@ -39,19 +39,21 @@ final class Habit {
     var countPerday: Int
     var score: Int
     var interval: [String: [Int]]
+    var skipOnceIn: Int
     var time: [String]
     var reward: Double?
     var bigReward: Double?
     @Relationship(deleteRule: .cascade, inverse: \DayStruct.habit) var checkedInDays = [DayStruct]()
     
     // Создание новой привычки
-    init(name: String, creationDate: String, count: Int, interval: [String: [Int]], time: [String], reward: Double?, bigReward: Double?) {
+    init(name: String, creationDate: String, count: Int, interval: [String: [Int]], skipOnceIn: Int, time: [String], reward: Double?, bigReward: Double?) {
         self.name = name
         self.creationDate = creationDate
         self.isArchived = false
         self.countPerday = count
         self.score = 0
         self.interval = interval
+        self.skipOnceIn = skipOnceIn
         self.time = time
         self.reward = reward
         self.bigReward = bigReward
@@ -64,6 +66,7 @@ final class Habit {
         self.countPerday = 1
         self.score = 0
         self.interval = ["daily": []]
+        self.skipOnceIn = 7
         self.time = ["00-00"]
         self.reward = 0.1
         self.bigReward = 5.0
@@ -77,6 +80,7 @@ final class Habit {
         self.countPerday = count
         self.score = 0
         self.interval = interval
+        self.skipOnceIn = 7
         self.checkedInDays = checkedInDays
         self.time = time
         self.reward = 0.3
@@ -119,9 +123,74 @@ final class Habit {
         if let index = checkedInDays.firstIndex(where: {$0.date == today}), checkedInDays[index].count > 0 {
             checkedInDays[index].count -= 1
             if checkedInDays[index].count < countPerday {
-                checkedInDays[index].state = "unchecked"
+                if checkedInDays[index].state == "checked" || checkedInDays[index].state == "skiped" {
+                    checkedInDays[index].state = "unchecked"
+                }
             }
         }
+    }
+    
+    func canSkip() -> Bool {
+        guard let interval = interval.first else {
+            print("⚠️ canSkip() -> interval array is empty")
+            return false
+        }
+        var count = 0
+        if interval.key == "by week" {
+            for day in checkedInDays.sorted(by: {$0.date > $1.date}) {
+                if count < skipOnceIn {
+                    guard let dayOfWeek = day.date.dayOfWeek() else {
+                        print("⚠️ canSkip() -> by week -> dayOfWeek() return nil ")
+                        return false
+                    }
+                    if interval.value.contains(dayOfWeek) {
+                        if day.state == "skiped" {
+                            return false
+                        } else {
+                            count += 1
+                        }
+                    } else {
+                        count += 1
+                    }
+                } else {
+                    return true
+                }
+            }
+        } else if interval.key == "custom" {
+            guard interval.value.count == 2 else {
+                print("⚠️ canSkip() -> custom -> interval.value.count == 2 return false")
+                return false
+            }
+            let activeDaysCount = interval.value[0]
+            let offDaysCount = interval.value[1]
+            for day in checkedInDays.sorted(by: {$0.date > $1.date}) {
+                if count < skipOnceIn {
+                    let state: Bool = day.date.isWorkingDay(from: creationDate, active: activeDaysCount, off: offDaysCount)
+                    if state {
+                        if day.state == "skiped" {
+                            return false
+                        } else {
+                            count += 1
+                        }
+                    }
+                } else {
+                    return true
+                }
+            }
+        } else {
+            for day in checkedInDays.sorted(by: {$0.date > $1.date}) {
+                if count < skipOnceIn {
+                    if day.state == "skiped" {
+                        return false
+                    } else {
+                        count += 1
+                    }
+                } else {
+                    return true
+                }
+            }
+        }
+        return false
     }
     
     func skip() {
@@ -132,11 +201,17 @@ final class Habit {
         }
     }
     
-    func fail() {
+    func hide() {
         let today = Date().convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
-            checkedInDays[index].count = 0
-            checkedInDays[index].state = "failed"
+            checkedInDays[index].state = "hide"
+        }
+    }
+    
+    func unhide() {
+        let today = Date().convertToString()
+        if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
+            checkedInDays[index].state = "unchecked"
         }
     }
     
@@ -183,7 +258,7 @@ final class Habit {
         let first = arr.removeFirst()
         var count = 0
         for state in arr {
-            if state == "unchecked" {
+            if state == "unchecked" || state == "hide" {
                 if first == "checked" {
                     count += 1
                 }

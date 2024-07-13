@@ -15,6 +15,7 @@ struct NewHabitView: View {
     @Query var habits: [Habit]
     @State private var name = ""
     @State private var pickerDate = Date()
+    @State private var skipDayCount = 7
     @State private var countPerDay = 1
     @State private var showTimeSection = false
     @State private var showRewardSection = false
@@ -106,11 +107,19 @@ struct NewHabitView: View {
                         }
                         .pickerStyle(.menu)
                     }
+                    HStack {
+                        Picker("Can skip once in:", selection: $skipDayCount) {
+                            ForEach(0..<101) { index in
+                                Text("\(index) days").tag(index)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                    }
                 }
                 Section {
                     Picker("Reps per day:", selection: $countPerDay) {
                         ForEach(0..<101) { index in
-                            Text(String(index))
+                            Text("\(index) reps")
                                 .tag(index)
                         }
                     }
@@ -221,7 +230,8 @@ struct NewHabitView: View {
             name: name,
             creationDate: pickerDate.convertToString(),
             count: countPerDay,
-            interval: interval,
+            interval: interval, 
+            skipOnceIn: skipDayCount,
             time: timeArray,
             reward: showRewardSection ? smallReward : nil,
             bigReward: showRewardSection ? bigReward : nil
@@ -246,7 +256,7 @@ struct NewHabitView: View {
                 guard interval.value.count == 2 else {return}
                 let activeDaysCount = interval.value[0]
                 let offDaysCount = interval.value[1]
-                let state = dayStr.isWorkingDay(from: habit.creationDate, active: activeDaysCount, off: offDaysCount)
+                let state: String = dayStr.isWorkingDay(from: habit.creationDate, active: activeDaysCount, off: offDaysCount)
                 let day = DayStruct(day: dayStr, habit: habit, state: state, reward: showRewardSection && dayStr == Date().convertToString() ? smallReward : nil)
                 newDays.append(day)
                 modelContext.insert(day)

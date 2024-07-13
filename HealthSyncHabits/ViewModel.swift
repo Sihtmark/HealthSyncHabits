@@ -113,6 +113,16 @@ extension String {
         let mod = diff % (active + off)
         return mod < active ? "unchecked" : "skiped"
     }
+    
+    func isWorkingDay(from creationDate: String, active: Int, off: Int) -> Bool {
+        guard let timeZone = TimeZone(identifier: "GMT") else { return true}
+        let startDate = creationDate.convertToDate() // Your first day of work
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        let diff = calendar.dateComponents([.day], from: startDate, to: self.convertToDate()).day!
+        let mod = diff % (active + off)
+        return mod < active
+    }
 }
 
 extension Dictionary {

@@ -16,6 +16,7 @@ struct HabitView: View {
     @Bindable var habit: Habit
     @State var name: String
     @State var pickerDate: Date
+    @State var skipDayCount = 7
     @State var countPerDay: Int
     @State var showTimeSection: Bool
     @State var showRewardSection: Bool
@@ -46,6 +47,7 @@ struct HabitView: View {
         return name != habit.name ||
         pickerDate.convertToString() != habit.creationDate ||
         countPerDay != habit.countPerday ||
+        skipDayCount != habit.skipOnceIn ||
         timeArray != habit.time ||
         smallReward != habit.reward ||
         bigReward != habit.bigReward ||
@@ -118,6 +120,14 @@ struct HabitView: View {
                         ForEach(0..<101) { index in
                             Text(String(index))
                                 .tag(index)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+                HStack {
+                    Picker("Can skip once in:", selection: $skipDayCount) {
+                        ForEach(0..<101) { index in
+                            Text("\(index) days").tag(index)
                         }
                     }
                     .pickerStyle(.menu)
@@ -309,7 +319,7 @@ struct HabitView: View {
                     guard interval.value.count == 2 else {return}
                     let activeDaysCount = interval.value[0]
                     let offDaysCount = interval.value[1]
-                    let state = dayStr.isWorkingDay(from: habit.creationDate, active: activeDaysCount, off: offDaysCount)
+                    let state: String = dayStr.isWorkingDay(from: habit.creationDate, active: activeDaysCount, off: offDaysCount)
                     let day = DayStruct(day: dayStr, habit: habit, state: state, reward: showRewardSection ? smallReward : nil)
                     newDays.append(day)
                     modelContext.insert(day)
@@ -330,6 +340,7 @@ struct HabitView: View {
         habit.name = name
         habit.creationDate = pickerDate.convertToString()
         habit.countPerday = countPerDay
+        habit.skipOnceIn = skipDayCount
         habit.interval = interval
         habit.time = timeArray
         habit.reward = showRewardSection ? smallReward : nil
