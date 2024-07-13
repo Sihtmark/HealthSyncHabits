@@ -28,11 +28,13 @@ struct HabitView: View {
     
     // Interval
     @State var pickedInterval: String
-    let intervalArray = ["daily", "by week", "custom"]
+    let intervalArray = ["daily", "by week", "custom", "transformer"]
     let weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     @State var pickedWeekDays: [Int]
     @State var activeDaysCount: Int
     @State var offDaysCount: Int
+    @State var transformerCount: Int
+    @State var transformerArray: [Int]
     @State private var intervalDidChanged = false
     
     let dateRange: ClosedRange<Date> = {
@@ -77,7 +79,7 @@ struct HabitView: View {
                 }
             }
             Section {
-                DatePicker("Starts from", selection: $pickerDate, in: dateRange, displayedComponents: .date)
+                DatePicker("Starts from:", selection: $pickerDate, in: dateRange, displayedComponents: .date)
                 Picker("Day interval:", selection: $pickedInterval) {
                     ForEach(intervalArray, id: \.self) { interval in
                         Text(interval)
@@ -123,6 +125,37 @@ struct HabitView: View {
                         }
                     }
                     .pickerStyle(.menu)
+                } else if pickedInterval == "transformer" {
+                    VStack {
+                        Picker("Total days in one set:", selection: $transformerCount) {
+                            ForEach(5..<101) { index in
+                                Text(String(index))
+                                    .tag(index)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        ScrollView(.horizontal) {
+                            HStack {
+                                ForEach(Array(transformerArray.enumerated()), id: \.offset) { index, value in
+                                    Button {
+                                        transformerArray[index] = value == 0 ? 1 : 0
+                                    } label: {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .fill(value == 1 ? Color.accentColor : Color.orange.opacity(0.4))
+                                                .frame(width: 50, height: 40)
+                                            Text("\(index + 1)")
+                                                .font(.title2)
+                                                .fontWeight(.bold)
+                                        }
+                                    }
+                                    .foregroundStyle(.white)
+                                }
+                            }
+                        }
+                        .scrollIndicators(.hidden)
+                        .scrollClipDisabled()
+                    }
                 }
                 HStack {
                     Picker("Can skip once in:", selection: $skipDayCount) {
@@ -282,6 +315,21 @@ struct HabitView: View {
                 }
             }
         }
+        .onChange(of: transformerCount) { oldValue, newValue in
+            if oldValue < newValue {
+                withAnimation {
+                    while transformerArray.count != newValue {
+                        transformerArray.append(0)
+                    }
+                }
+            } else if oldValue > newValue {
+                withAnimation {
+                    while transformerArray.count != newValue {
+                        transformerArray.removeLast()
+                    }
+                }
+            }
+        }
         .alert("Are you shure you want to delete this habit?", isPresented: $deleteAlert) {
             Button("Delete", role: .destructive) {
                 modelContext.delete(habit)
@@ -298,6 +346,8 @@ struct HabitView: View {
             interval = ["by week": pickedWeekDays]
         } else if pickedInterval == "custom" {
             interval = ["custom": [activeDaysCount, offDaysCount]]
+        } else if pickedInterval == "transformer" {
+            interval = ["transformer": transformerArray]
         }
         if pickerDate.convertToString() < habit.creationDate {
             let newDaysStr = vm.getDays(for: habit, changing: pickerDate)
@@ -319,8 +369,13 @@ struct HabitView: View {
                     guard interval.value.count == 2 else {return}
                     let activeDaysCount = interval.value[0]
                     let offDaysCount = interval.value[1]
-                    let state: String = dayStr.isWorkingDay(from: habit.creationDate, active: activeDaysCount, off: offDaysCount)
+                    let state: String = dayStr.isWorkingDay(from: pickerDate.convertToString(), active: activeDaysCount, off: offDaysCount)
                     let day = DayStruct(day: dayStr, habit: habit, state: state, reward: showRewardSection ? smallReward : nil)
+                    newDays.append(day)
+                    modelContext.insert(day)
+                } else if interval.key == "transformer" {
+                    let state: String = dayStr.isWorkingDay(from: pickerDate.convertToString(), arr: interval.value)
+                    let day = DayStruct(day: dayStr, habit: habit, state: state, reward: showRewardSection && dayStr == Date().convertToString() ? smallReward : nil)
                     newDays.append(day)
                     modelContext.insert(day)
                 } else {
@@ -363,7 +418,9 @@ struct HabitView: View {
         pickedInterval: "by week",
         pickedWeekDays: [1, 5],
         activeDaysCount: 1,
-        offDaysCount: 1
+        offDaysCount: 1,
+        transformerCount: 7,
+        transformerArray: Array(repeating: 0, count: 7)
     )
     .modelContainer(for: Habit.self, inMemory: true)
     .environment(ViewModel())

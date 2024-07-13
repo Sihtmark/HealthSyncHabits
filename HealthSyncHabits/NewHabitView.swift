@@ -25,11 +25,13 @@ struct NewHabitView: View {
     
     // Interval
     @State private var pickedInterval = "daily"
-    let intervalArray = ["daily", "by week", "custom"]
+    let intervalArray = ["daily", "by week", "custom", "transformer"]
     let weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     @State private var pickedWeekDays = [Int]()
     @State private var activeDaysCount = 1
     @State private var offDaysCount = 1
+    @State private var transformerCount = 7
+    @State private var transformerArray = Array(repeating: 0, count: 7)
     
     let dateRange: ClosedRange<Date> = {
         let calendar = Calendar.current
@@ -106,6 +108,37 @@ struct NewHabitView: View {
                             }
                         }
                         .pickerStyle(.menu)
+                    } else if pickedInterval == "transformer" {
+                        VStack {
+                            Picker("Total days in one set:", selection: $transformerCount) {
+                                ForEach(5..<101) { index in
+                                    Text(String(index))
+                                        .tag(index)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            ScrollView(.horizontal) {
+                                HStack {
+                                    ForEach(Array(transformerArray.enumerated()), id: \.offset) { index, value in
+                                        Button {
+                                            transformerArray[index] = value == 0 ? 1 : 0
+                                        } label: {
+                                            ZStack {
+                                                RoundedRectangle(cornerRadius: 6)
+                                                    .fill(value == 1 ? Color.accentColor : Color.orange.opacity(0.4))
+                                                    .frame(width: 50, height: 40)
+                                                Text("\(index + 1)")
+                                                    .font(.title2)
+                                                    .fontWeight(.bold)
+                                            }
+                                        }
+                                        .foregroundStyle(.white)
+                                    }
+                                }
+                            }
+                            .scrollIndicators(.hidden)
+                            .scrollClipDisabled()
+                        }
                     }
                     HStack {
                         Picker("Can skip once in:", selection: $skipDayCount) {
@@ -214,6 +247,21 @@ struct NewHabitView: View {
                     }
                 }
             }
+            .onChange(of: transformerCount) { oldValue, newValue in
+                if oldValue < newValue {
+                    withAnimation {
+                        while transformerArray.count != newValue {
+                            transformerArray.append(0)
+                        }
+                    }
+                } else if oldValue > newValue {
+                    withAnimation {
+                        while transformerArray.count != newValue {
+                            transformerArray.removeLast()
+                        }
+                    }
+                }
+            }
         }
     }
     
@@ -225,6 +273,8 @@ struct NewHabitView: View {
             interval = ["by week": pickedWeekDays]
         } else if pickedInterval == "custom" {
             interval = ["custom": [activeDaysCount, offDaysCount]]
+        } else if pickedInterval == "transformer" {
+            interval = ["transformer": transformerArray]
         }
         let habit = Habit(
             name: name,
@@ -257,6 +307,11 @@ struct NewHabitView: View {
                 let activeDaysCount = interval.value[0]
                 let offDaysCount = interval.value[1]
                 let state: String = dayStr.isWorkingDay(from: habit.creationDate, active: activeDaysCount, off: offDaysCount)
+                let day = DayStruct(day: dayStr, habit: habit, state: state, reward: showRewardSection && dayStr == Date().convertToString() ? smallReward : nil)
+                newDays.append(day)
+                modelContext.insert(day)
+            } else if interval.key == "transformer" {
+                let state: String = dayStr.isWorkingDay(from: habit.creationDate, arr: interval.value)
                 let day = DayStruct(day: dayStr, habit: habit, state: state, reward: showRewardSection && dayStr == Date().convertToString() ? smallReward : nil)
                 newDays.append(day)
                 modelContext.insert(day)

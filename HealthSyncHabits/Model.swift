@@ -177,6 +177,21 @@ final class Habit {
                     return true
                 }
             }
+        } else if interval.key == "transformer" {
+            for day in checkedInDays.sorted(by: {$0.date > $1.date}) {
+                if count < skipOnceIn {
+                    let state: Bool = day.date.isWorkingDay(from: creationDate, arr: interval.value)
+                    if state {
+                        if day.state == "skiped" {
+                            return false
+                        } else {
+                            count += 1
+                        }
+                    }
+                } else {
+                    return true
+                }
+            }
         } else {
             for day in checkedInDays.sorted(by: {$0.date > $1.date}) {
                 if count < skipOnceIn {

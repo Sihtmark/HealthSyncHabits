@@ -114,6 +114,16 @@ extension String {
         return mod < active ? "unchecked" : "skiped"
     }
     
+    func isWorkingDay(from creationDate: String, arr: [Int]) -> String {
+        guard let timeZone = TimeZone(identifier: "GMT") else { return "unchecked"}
+        let startDate = creationDate.convertToDate() // Your first day of work
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        let diff = calendar.dateComponents([.day], from: startDate, to: self.convertToDate()).day!
+        let mod = diff % arr.count
+        return arr[mod] == 1 ? "unchecked" : "skiped"
+    }
+    
     func isWorkingDay(from creationDate: String, active: Int, off: Int) -> Bool {
         guard let timeZone = TimeZone(identifier: "GMT") else { return true}
         let startDate = creationDate.convertToDate() // Your first day of work
@@ -122,6 +132,29 @@ extension String {
         let diff = calendar.dateComponents([.day], from: startDate, to: self.convertToDate()).day!
         let mod = diff % (active + off)
         return mod < active
+    }
+    
+    func isWorkingDay(from creationDate: String, arr: [Int]) -> Bool {
+        guard let timeZone = TimeZone(identifier: "GMT") else { return true}
+        let startDate = creationDate.convertToDate() // Your first day of work
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        let diff = calendar.dateComponents([.day], from: startDate, to: self.convertToDate()).day!
+        let mod = diff % arr.count
+        return arr[mod] == 1 
+    }
+    
+    func userFriendlyDate() -> String? {
+        let inputFormatter = DateFormatter()
+        inputFormatter.dateFormat = "yyyy-MM-dd"
+        guard let date = inputFormatter.date(from: self) else {
+            return nil
+        }
+        let outputFormatter = DateFormatter()
+        outputFormatter.dateStyle = .short
+        outputFormatter.timeStyle = .none
+        let userFriendlyDateString = outputFormatter.string(from: date)
+        return userFriendlyDateString
     }
 }
 

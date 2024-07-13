@@ -104,21 +104,21 @@ struct MainList: View {
             }
             .navigationDestination(for: Habit.self) { habit in
                 HabitView(
-                    habit: habit,
-                    name: habit.name,
-                    pickerDate: habit.creationDate.convertToDate(),
-                    countPerDay: habit.countPerday,
-                    showTimeSection: true,
-                    showRewardSection: habit.reward != nil,
-                    timeArray: habit.time,
-                    smallReward: habit.reward ?? 0.3,
-                    bigReward: habit.bigReward ?? 5.0,
-                    pickedInterval: habit.interval.first?.key ?? "daily",
-                    pickedWeekDays: habit.interval.first?.key == "by week" ? habit.interval.first?.value ?? [] : [],
-                    activeDaysCount: habit.interval.first?.key == "custom" ?
-                    habit.interval.first?.value[0] ?? 1 : 1,
-                    offDaysCount: habit.interval.first?.key == "custom" ?
-                    habit.interval.first?.value[1] ?? 1 : 1
+                    habit:            habit,
+                    name:             habit.name,
+                    pickerDate:       habit.creationDate.convertToDate(),
+                    countPerDay:      habit.countPerday,
+                    showTimeSection:  true,
+                    showRewardSection:habit.reward != nil,
+                    timeArray:        habit.time,
+                    smallReward:      habit.reward ?? 0.3,
+                    bigReward:        habit.bigReward ?? 5.0,
+                    pickedInterval:   habit.interval.first?.key ?? "daily",
+                    pickedWeekDays:   habit.interval.first?.key == "by week" ? habit.interval.first?.value ?? [] : [],
+                    activeDaysCount:  habit.interval.first?.key == "custom" ? habit.interval.first?.value[0] ?? 1 : 1,
+                    offDaysCount:     habit.interval.first?.key == "custom" ? habit.interval.first?.value[1] ?? 1 : 1,
+                    transformerCount: habit.interval.first?.key == "transformer" ? habit.interval.first?.value.count ?? 7 : 7,
+                    transformerArray: habit.interval.first?.key == "transformer" ? habit.interval.first?.value ?? Array(repeating: 0, count: 7) : Array(repeating: 0, count: 7)
                 )
             }
             .onAppear {
@@ -506,6 +506,11 @@ struct MainList: View {
                     let activeDaysCount = interval.value[0]
                     let offDaysCount = interval.value[1]
                     let state: String = dayStr.isWorkingDay(from: habit.creationDate, active: activeDaysCount, off: offDaysCount)
+                    let day = DayStruct(day: dayStr, habit: habit, state: state, reward: habit.reward)
+                    modelContext.insert(day)
+                    habits[i].checkedInDays.append(day)
+                } else if interval.key == "transformer" {
+                    let state: String = dayStr.isWorkingDay(from: habit.creationDate, arr: interval.value)
                     let day = DayStruct(day: dayStr, habit: habit, state: state, reward: habit.reward)
                     modelContext.insert(day)
                     habits[i].checkedInDays.append(day)
