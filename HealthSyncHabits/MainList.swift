@@ -12,6 +12,8 @@ struct MainList: View {
     @Environment(ViewModel.self) private var vm
     @Environment(\.modelContext) private var modelContext
     @Query var habits: [Habit]
+    @State private var date = Date()
+    @State private var isDatePickerPresented = false
     @State private var path = NavigationPath()
     @State private var showNewHabitSheet = false
     @State private var onAppOpening = true
@@ -45,8 +47,35 @@ struct MainList: View {
                 NewHabitView()
                     .presentationDragIndicator(.visible)
             }
+            .sheet(isPresented: $isDatePickerPresented) {
+                VStack {
+                    DatePicker(
+                        "",
+                        selection: $date,
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(GraphicalDatePickerStyle())
+                    .padding(.horizontal)
+                    .padding(.top, 40)
+                    
+                    Button("Done") {
+                        isDatePickerPresented.toggle()
+                    }
+                    .font(.title3)
+                    .padding(.bottom, 40)
+                }
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+            }
             .navigationTitle("Habits")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        isDatePickerPresented.toggle()
+                    } label: {
+                        Image(systemName: "calendar")
+                    }
+                }
                 if let userSettings {
                     ToolbarItem(placement: .principal) {
                         HStack {
@@ -176,20 +205,21 @@ struct MainList: View {
     private var uncheckedSection: some View {
         Section {
             ForEach(habits.filter({ habit in
-                let today = Date().convertToString()
+                let today = date.convertToString()
                 if let day = habit.checkedInDays.first(where: {$0.date == today}) {
                     return day.state == "unchecked"
                 }
                 return false
             }).sorted(by: { topHabit, bottomHabit in
-                let topCount = topHabit.checkedInDays.first(where: {$0.date == Date().convertToString()})?.count ?? 0
-                let bottomCount = bottomHabit.checkedInDays.first(where: {$0.date == Date().convertToString()})?.count ?? 0
+                let today = date.convertToString()
+                let topCount = topHabit.checkedInDays.first(where: {$0.date == today})?.count ?? 0
+                let bottomCount = bottomHabit.checkedInDays.first(where: {$0.date == today})?.count ?? 0
                 return topHabit.time[topCount] < bottomHabit.time[bottomCount]
             }), id: \.self) { habit in
                 HStack {
                     Text(habit.name)
                     Spacer()
-                    Text(habit.todayScore())
+                    Text(habit.todayScore(date: date))
                         .font(.footnote)
                         .foregroundStyle(.placeholder)
                     Divider()
@@ -204,7 +234,7 @@ struct MainList: View {
                 }
                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
                     Button {
-                        habit.addRep()
+                        habit.addRep(date: date)
                         if let reward = habit.reward {
                             userSettings?.totalReward += reward
                         }
@@ -213,9 +243,9 @@ struct MainList: View {
                         Image(systemName: "checkmark.seal.fill")
                     }
                     .tint(.green)
-                    if let today = habit.checkedInDays.first(where: {$0.date == Date().convertToString()}), today.count > 0 {
+                    if let today = habit.checkedInDays.first(where: {$0.date == date.convertToString()}), today.count > 0 {
                         Button {
-                            habit.removeRep()
+                            habit.removeRep(date: date)
                             if let reward = habit.reward {
                                 userSettings?.totalReward -= reward
                             }
@@ -228,16 +258,16 @@ struct MainList: View {
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                     Button("Hide") {
-                        habit.hide()
+                        habit.hide(date: date)
                     }
                     .tint(.blue)
                     if habit.canSkip() {
                         Button("Skip") {
-                            let today = Date().convertToString()
+                            let today = date.convertToString()
                             if let index = habit.checkedInDays.firstIndex(where: {$0.date == today}), let reward = habit.reward {
                                 userSettings?.totalReward -= (Double(habit.checkedInDays[index].count) * reward)
                             }
-                            habit.skip()
+                            habit.skip(date: date)
                             habit.calculateScore()
                         }
                         .tint(.red)
@@ -254,7 +284,7 @@ struct MainList: View {
     private var checkedSection: some View {
         Section {
             ForEach(habits.filter({ habit in
-                let today = Date().convertToString()
+                let today = date.convertToString()
                 if let day = habit.checkedInDays.first(where: {$0.date == today}) {
                     return day.state == "checked"
                 }
@@ -263,7 +293,7 @@ struct MainList: View {
                 HStack {
                     Text(habit.name)
                     Spacer()
-                    Text(habit.todayScore())
+                    Text(habit.todayScore(date: date))
                         .font(.footnote)
                         .foregroundStyle(.placeholder)
                     Divider()
@@ -278,7 +308,7 @@ struct MainList: View {
                 }
                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
                     Button {
-                        habit.addRep()
+                        habit.addRep(date: date)
                         if let reward = habit.reward {
                             userSettings?.totalReward += reward
                         }
@@ -287,9 +317,9 @@ struct MainList: View {
                         Image(systemName: "checkmark.seal.fill")
                     }
                     .tint(.green)
-                    if let today = habit.checkedInDays.first(where: {$0.date == Date().convertToString()}), today.count > 0 {
+                    if let today = habit.checkedInDays.first(where: {$0.date == date.convertToString()}), today.count > 0 {
                         Button {
-                            habit.removeRep()
+                            habit.removeRep(date: date)
                             if let reward = habit.reward {
                                 userSettings?.totalReward -= reward
                             }
@@ -303,11 +333,11 @@ struct MainList: View {
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                     if habit.canSkip() {
                         Button("Skip", role: .cancel) {
-                            let today = Date().convertToString()
+                            let today = date.convertToString()
                             if let index = habit.checkedInDays.firstIndex(where: {$0.date == today}), let reward = habit.reward {
                                 userSettings?.totalReward -= (Double(habit.checkedInDays[index].count) * reward)
                             }
-                            habit.skip()
+                            habit.skip(date: date)
                             habit.calculateScore()
                         }
                         .tint(.red)
@@ -324,7 +354,7 @@ struct MainList: View {
     private var skipedSection: some View {
         Section {
             ForEach(habits.filter({ habit in
-                let today = Date().convertToString()
+                let today = date.convertToString()
                 if let day = habit.checkedInDays.first(where: {$0.date == today}) {
                     return day.state == "skiped"
                 }
@@ -333,7 +363,7 @@ struct MainList: View {
                 HStack {
                     Text(habit.name)
                     Spacer()
-                    Text(habit.todayScore())
+                    Text(habit.todayScore(date: date))
                         .font(.footnote)
                         .foregroundStyle(.placeholder)
                     Divider()
@@ -348,7 +378,7 @@ struct MainList: View {
                 }
                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
                     Button {
-                        habit.addRepAndReplace()
+                        habit.addRepAndReplace(date: date)
                         if let reward = habit.reward {
                             userSettings?.totalReward += reward
                         }
@@ -360,7 +390,7 @@ struct MainList: View {
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                     Button("Uncheck") {
-                        habit.uncheckFromSkiped()
+                        habit.uncheckFromSkiped(date: date)
                         habit.calculateScore()
                     }
                     .tint(.cyan)
@@ -376,20 +406,20 @@ struct MainList: View {
     private var hiddenSection: some View {
         Section {
             ForEach(habits.filter({ habit in
-                let today = Date().convertToString()
+                let today = date.convertToString()
                 if let day = habit.checkedInDays.first(where: {$0.date == today}) {
                     return day.state == "hide"
                 }
                 return false
             }).sorted(by: { topHabit, bottomHabit in
-                let topCount = topHabit.checkedInDays.first(where: {$0.date == Date().convertToString()})?.count ?? 0
-                let bottomCount = bottomHabit.checkedInDays.first(where: {$0.date == Date().convertToString()})?.count ?? 0
+                let topCount = topHabit.checkedInDays.first(where: {$0.date == date.convertToString()})?.count ?? 0
+                let bottomCount = bottomHabit.checkedInDays.first(where: {$0.date == date.convertToString()})?.count ?? 0
                 return topHabit.time[topCount] < bottomHabit.time[bottomCount]
             }), id: \.self) { habit in
                 HStack {
                     Text(habit.name)
                     Spacer()
-                    Text(habit.todayScore())
+                    Text(habit.todayScore(date: date))
                         .font(.footnote)
                         .foregroundStyle(.placeholder)
                     Divider()
@@ -404,7 +434,7 @@ struct MainList: View {
                 }
                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
                     Button {
-                        habit.addRep()
+                        habit.addRep(date: date)
                         if let reward = habit.reward {
                             userSettings?.totalReward += reward
                         }
@@ -413,9 +443,9 @@ struct MainList: View {
                         Image(systemName: "checkmark.seal.fill")
                     }
                     .tint(.green)
-                    if let today = habit.checkedInDays.first(where: {$0.date == Date().convertToString()}), today.count > 0 {
+                    if let today = habit.checkedInDays.first(where: {$0.date == date.convertToString()}), today.count > 0 {
                         Button {
-                            habit.removeRep()
+                            habit.removeRep(date: date)
                             if let reward = habit.reward {
                                 userSettings?.totalReward -= reward
                             }
@@ -428,16 +458,16 @@ struct MainList: View {
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                     Button("Unhide") {
-                        habit.unhide()
+                        habit.unhide(date: date)
                     }
                     .tint(.blue)
                     if habit.canSkip() {
                         Button("Skip") {
-                            let today = Date().convertToString()
+                            let today = date.convertToString()
                             if let index = habit.checkedInDays.firstIndex(where: {$0.date == today}), let reward = habit.reward {
                                 userSettings?.totalReward -= (Double(habit.checkedInDays[index].count) * reward)
                             }
-                            habit.skip()
+                            habit.skip(date: date)
                             habit.calculateScore()
                         }
                         .tint(.red)

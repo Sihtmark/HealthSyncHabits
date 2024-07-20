@@ -87,29 +87,16 @@ final class Habit {
         self.bigReward = 5.0
     }
     
-    func todayScore() -> String {
-        let today = Date().convertToString()
+    func todayScore(date: Date) -> String {
+        let today = date.convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
             return "\(checkedInDays[index].count) / \(countPerday)"
         }
         return "0"
     }
     
-    func todayScoreColor() -> Color {
-        let today = Date().convertToString()
-        if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
-            let currentCount = checkedInDays[index].count
-            if currentCount < countPerday {
-                return .yellow
-            } else if currentCount >= countPerday {
-                return .green
-            }
-        }
-        return .orange
-    }
-    
-    func addRep() {
-        let today = Date().convertToString()
+    func addRep(date: Date) {
+        let today = date.convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
             checkedInDays[index].count += 1
             if checkedInDays[index].count >= countPerday {
@@ -118,8 +105,8 @@ final class Habit {
         }
     }
     
-    func removeRep() {
-        let today = Date().convertToString()
+    func removeRep(date: Date) {
+        let today = date.convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}), checkedInDays[index].count > 0 {
             checkedInDays[index].count -= 1
             if checkedInDays[index].count < countPerday {
@@ -208,30 +195,30 @@ final class Habit {
         return false
     }
     
-    func skip() {
-        let today = Date().convertToString()
+    func skip(date: Date) {
+        let today = date.convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
             checkedInDays[index].count = 0
             checkedInDays[index].state = "skiped"
         }
     }
     
-    func hide() {
-        let today = Date().convertToString()
+    func hide(date: Date) {
+        let today = date.convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
             checkedInDays[index].state = "hide"
         }
     }
     
-    func unhide() {
-        let today = Date().convertToString()
+    func unhide(date: Date) {
+        let today = date.convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
             checkedInDays[index].state = "unchecked"
         }
     }
     
-    func canAlreadyCheck() -> Bool {
-        let today = Date().convertToString()
+    func canAlreadyCheck(date: Date) -> Bool {
+        let today = date.convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
             if checkedInDays[index].count >= countPerday {
                 return true
@@ -240,24 +227,24 @@ final class Habit {
         return false
     }
     
-    func checkFromUnCheck() {
-        let today = Date().convertToString()
+    func checkFromUnCheck(date: Date) {
+        let today = date.convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
             checkedInDays[index].count = countPerday
             checkedInDays[index].state = "checked"
         }
     }
     
-    func uncheckFromSkiped() {
-        let today = Date().convertToString()
+    func uncheckFromSkiped(date: Date) {
+        let today = date.convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
             checkedInDays[index].count = 0
             checkedInDays[index].state = "unchecked"
         }
     }
     
-    func addRepAndReplace() {
-        let today = Date().convertToString()
+    func addRepAndReplace(date: Date) {
+        let today = date.convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
             checkedInDays[index].count += 1
             if checkedInDays[index].count >= countPerday {
