@@ -25,6 +25,7 @@ struct HabitView: View {
     @State var bigReward: Double
     let statusArray = ["unchecked", "checked", "skiped"]
     @State private var deleteAlert = false
+    let columns = Array(repeating: GridItem(.fixed(20), spacing: 5, alignment: nil), count: 7)
     
     // Interval
     @State var pickedInterval: String
@@ -35,6 +36,7 @@ struct HabitView: View {
     @State var offDaysCount: Int
     @State var transformerCount: Int
     @State var transformerArray: [Int]
+    let emptyItems: Int
     @State private var intervalDidChanged = false
     
     let dateRange: ClosedRange<Date> = {
@@ -59,6 +61,7 @@ struct HabitView: View {
     
     var body: some View {
         List {
+            scoreByCalendarView
             nameSection
             dateSection
             toggleSection
@@ -69,7 +72,6 @@ struct HabitView: View {
                 rewardSection
             }
             deleteSection
-            historySection
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -390,50 +392,66 @@ struct HabitView: View {
         }
     }
     
-    var historySection: some View {
-        Section("History") {
-            ForEach(habit.checkedInDays.sorted(by: {$0.date > $1.date}), id: \.self) { day in
-                HStack {
-                    Text(day.date)
-                    Spacer()
-                    Text(day.state)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            if day.state != "skiped" {
-                                Button("Skip") {
-                                    day.state = "skiped"
-                                    day.count = 0
-                                    habit.calculateScore()
-                                }
-                                .tint(.yellow)
-                            }
-                            if day.state != "checked" {
-                                Button("Check") {
-                                    day.state = "checked"
-                                    day.count = habit.countPerday
-                                    habit.calculateScore()
-                                }
-                                .tint(.green)
-                            }
-                            if day.state != "unchecked" {
-                                Button("Uncheck") {
-                                    day.state = "unchecked"
-                                    day.count = 0
-                                    habit.calculateScore()
-                                }
-                                .tint(.orange)
-                            }
-                        }
-                }
-            }
-        }
-    }
-    
     var deleteSection: some View {
         Section {
             Button("Delete this habit", role: .destructive) {
                 deleteAlert.toggle()
             }
+        }
+    }
+    
+    var scoreByCalendarView: some View {
+        ScrollView(.horizontal) {
+            LazyHGrid(rows: columns, alignment: .center, spacing: 5, content: {
+                ForEach(0..<emptyItems) { _ in
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color.black.opacity(0.001))
+                        .frame(width: 20)
+                }
+                ForEach(habit.checkedInDays.sorted(by: {$0.date < $1.date}), id: \.self) { day in
+                    Menu {
+                        if day.state != "skiped" {
+                            Button("Skip") {
+                                day.state = "skiped"
+                                day.count = 0
+                                habit.calculateScore()
+                            }
+                        }
+                        if day.state != "checked" {
+                            Button("Check") {
+                                day.state = "checked"
+                                day.count = habit.countPerday
+                                habit.calculateScore()
+                            }
+                        }
+                        if day.state != "unchecked" {
+                            Button("Uncheck") {
+                                day.state = "unchecked"
+                                day.count = 0
+                                habit.calculateScore()
+                            }
+                        }
+                    } label: {
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(scoreVisionCellColor(dayStruct: day))
+                            .frame(width: 20)
+                    }
+                }
+            })
+            .flipsForRightToLeftLayoutDirection(true)
+            .environment(\.layoutDirection, .rightToLeft)
+        }
+        .flipsForRightToLeftLayoutDirection(true)
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+    
+    func scoreVisionCellColor(dayStruct: DayStruct) -> Color {
+        if dayStruct.state == "checked" {
+            return Color.green
+        } else if dayStruct.state == "skiped" {
+            return Color.yellow.opacity(0.5)
+        } else {
+            return Color.secondary.opacity(0.5)
         }
     }
 }
@@ -454,7 +472,8 @@ struct HabitView: View {
         activeDaysCount: 1,
         offDaysCount: 1,
         transformerCount: 7,
-        transformerArray: Array(repeating: 0, count: 7)
+        transformerArray: Array(repeating: 0, count: 7), 
+        emptyItems: 3
     )
     .modelContainer(for: Habit.self, inMemory: true)
     .environment(ViewModel())

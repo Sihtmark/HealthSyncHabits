@@ -147,12 +147,23 @@ struct MainList: View {
                     activeDaysCount:  habit.interval.first?.key == "custom" ? habit.interval.first?.value[0] ?? 1 : 1,
                     offDaysCount:     habit.interval.first?.key == "custom" ? habit.interval.first?.value[1] ?? 1 : 1,
                     transformerCount: habit.interval.first?.key == "transformer" ? habit.interval.first?.value.count ?? 7 : 7,
-                    transformerArray: habit.interval.first?.key == "transformer" ? habit.interval.first?.value ?? Array(repeating: 0, count: 7) : Array(repeating: 0, count: 7)
+                    transformerArray: habit.interval.first?.key == "transformer" ? habit.interval.first?.value ?? Array(repeating: 0, count: 7) : Array(repeating: 0, count: 7), 
+                    emptyItems:       emptyItems(habit: habit)
                 )
             }
             .onAppear {
                 onAppearMethod()
             }
+        }
+    }
+    
+    private func emptyItems(habit: Habit) -> Int {
+        let date = habit.checkedInDays.sorted(by: {$0.date < $1.date}).first?.date.convertToDate()
+        var weekday = Calendar.current.component(.weekday, from: date ?? Date())
+        if weekday == 1 {
+            return 6
+        } else {
+            return weekday - 2
         }
     }
     
