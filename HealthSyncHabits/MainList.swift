@@ -275,9 +275,6 @@ struct MainList: View {
                     if habit.canSkip() {
                         Button("Skip") {
                             let today = date.convertToString()
-                            if let index = habit.checkedInDays.firstIndex(where: {$0.date == today}), let reward = habit.reward {
-                                userSettings?.totalReward -= (Double(habit.checkedInDays[index].count) * reward)
-                            }
                             habit.skip(date: date)
                             habit.calculateScore()
                         }
@@ -341,19 +338,6 @@ struct MainList: View {
                         .tint(.orange)
                     }
                 }
-                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                    if habit.canSkip() {
-                        Button("Skip", role: .cancel) {
-                            let today = date.convertToString()
-                            if let index = habit.checkedInDays.firstIndex(where: {$0.date == today}), let reward = habit.reward {
-                                userSettings?.totalReward -= (Double(habit.checkedInDays[index].count) * reward)
-                            }
-                            habit.skip(date: date)
-                            habit.calculateScore()
-                        }
-                        .tint(.red)
-                    }
-                }
             }
         } header: {
             Text("✅ Checked")
@@ -400,7 +384,7 @@ struct MainList: View {
                     .tint(.green)
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                    Button("Uncheck") {
+                    Button("Return") {
                         habit.uncheckFromSkiped(date: date)
                         habit.calculateScore()
                     }
@@ -475,9 +459,6 @@ struct MainList: View {
                     if habit.canSkip() {
                         Button("Skip") {
                             let today = date.convertToString()
-                            if let index = habit.checkedInDays.firstIndex(where: {$0.date == today}), let reward = habit.reward {
-                                userSettings?.totalReward -= (Double(habit.checkedInDays[index].count) * reward)
-                            }
                             habit.skip(date: date)
                             habit.calculateScore()
                         }

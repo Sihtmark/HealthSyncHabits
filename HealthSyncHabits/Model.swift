@@ -198,15 +198,20 @@ final class Habit {
     func skip(date: Date) {
         let today = date.convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
-            checkedInDays[index].count = 0
-            checkedInDays[index].state = "skiped"
+            if checkedInDays[index].count < countPerday {
+                checkedInDays[index].state = "skiped"
+            }
         }
     }
     
     func hide(date: Date) {
         let today = date.convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
-            checkedInDays[index].state = "hide"
+            if checkedInDays[index].count < countPerday {
+                checkedInDays[index].state = "hide"
+            } else {
+                checkedInDays[index].state = "checked"
+            }
         }
     }
     
@@ -238,8 +243,11 @@ final class Habit {
     func uncheckFromSkiped(date: Date) {
         let today = date.convertToString()
         if let index = checkedInDays.firstIndex(where: {$0.date == today}) {
-            checkedInDays[index].count = 0
-            checkedInDays[index].state = "unchecked"
+            if checkedInDays[index].count < countPerday {
+                checkedInDays[index].state = "unchecked"
+            } else {
+                checkedInDays[index].state = "checked"
+            }
         }
     }
     
