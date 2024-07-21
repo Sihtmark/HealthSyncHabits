@@ -95,7 +95,7 @@ struct HabitView: View {
         })
         .onChange(of: countPerDay) { oldValue, newValue in
             if oldValue < newValue {
-                for e in 0..<(newValue - oldValue) {
+                for _ in 0..<(newValue - oldValue) {
                     timeArray.append("00-00")
                 }
             } else {

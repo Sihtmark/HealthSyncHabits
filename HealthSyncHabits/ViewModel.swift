@@ -17,7 +17,6 @@ import SwiftData
         calendar.timeZone = timeZone
         var endDate: Date
         if var changing {
-            let newCreationDate = changing.convertToString()
             let date = calendar.startOfDay(for: habitCreationDate)
             endDate = calendar.date(byAdding: .day, value: -1, to: date) ?? date
             

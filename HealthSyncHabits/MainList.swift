@@ -159,7 +159,7 @@ struct MainList: View {
     
     private func emptyItems(habit: Habit) -> Int {
         let date = habit.checkedInDays.sorted(by: {$0.date < $1.date}).first?.date.convertToDate()
-        var weekday = Calendar.current.component(.weekday, from: date ?? Date())
+        let weekday = Calendar.current.component(.weekday, from: date ?? Date())
         if weekday == 1 {
             return 6
         } else {
@@ -274,7 +274,6 @@ struct MainList: View {
                     .tint(.blue)
                     if habit.canSkip() {
                         Button("Skip") {
-                            let today = date.convertToString()
                             habit.skip(date: date)
                             habit.calculateScore()
                         }
@@ -458,7 +457,6 @@ struct MainList: View {
                     .tint(.blue)
                     if habit.canSkip() {
                         Button("Skip") {
-                            let today = date.convertToString()
                             habit.skip(date: date)
                             habit.calculateScore()
                         }
