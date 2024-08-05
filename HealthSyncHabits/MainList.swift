@@ -222,11 +222,23 @@ struct MainList: View {
                 }
                 return false
             }).sorted(by: { topHabit, bottomHabit in
-                let today = date.convertToString()
-                let topCount = topHabit.checkedInDays.first(where: {$0.date == today})?.count ?? 0
-                let bottomCount = bottomHabit.checkedInDays.first(where: {$0.date == today})?.count ?? 0
-                return topHabit.time[topCount] < bottomHabit.time[bottomCount]
-            }), id: \.self) { habit in
+                    let today = date.convertToString()
+                    var topCount = topHabit.checkedInDays.first(where: {$0.date == today})?.count ?? 0
+                    var bottomCount = bottomHabit.checkedInDays.first(where: {$0.date == today})?.count ?? 0
+                var topTime = ""
+                var bottomTime = ""
+                if topCount >= topHabit.time.count {
+                    topTime = topHabit.time.last ?? ""
+                } else {
+                    topTime = topHabit.time[topCount]
+                }
+                if bottomCount >= bottomHabit.time.count {
+                    bottomTime = bottomHabit.time.last ?? ""
+                } else {
+                    bottomTime = bottomHabit.time[bottomCount]
+                }
+                return topTime < bottomTime
+                }), id: \.self) { habit in
                 HStack {
                     Text(habit.name)
                     Spacer()
@@ -296,6 +308,23 @@ struct MainList: View {
                     return day.state == "checked"
                 }
                 return false
+            }).sorted(by: { topHabit, bottomHabit in
+                let today = date.convertToString()
+                var topCount = topHabit.checkedInDays.first(where: {$0.date == today})?.count ?? 0
+                var bottomCount = bottomHabit.checkedInDays.first(where: {$0.date == today})?.count ?? 0
+            var topTime = ""
+            var bottomTime = ""
+            if topCount >= topHabit.time.count {
+                topTime = topHabit.time.last ?? ""
+            } else {
+                topTime = topHabit.time[topCount]
+            }
+            if bottomCount >= bottomHabit.time.count {
+                bottomTime = bottomHabit.time.last ?? ""
+            } else {
+                bottomTime = bottomHabit.time[bottomCount]
+            }
+            return topTime < bottomTime
             }), id: \.self) { habit in
                 HStack {
                     Text(habit.name)
@@ -353,6 +382,23 @@ struct MainList: View {
                     return day.state == "skiped"
                 }
                 return false
+            }).sorted(by: { topHabit, bottomHabit in
+                let today = date.convertToString()
+                var topCount = topHabit.checkedInDays.first(where: {$0.date == today})?.count ?? 0
+                var bottomCount = bottomHabit.checkedInDays.first(where: {$0.date == today})?.count ?? 0
+            var topTime = ""
+            var bottomTime = ""
+            if topCount >= topHabit.time.count {
+                topTime = topHabit.time.last ?? ""
+            } else {
+                topTime = topHabit.time[topCount]
+            }
+            if bottomCount >= bottomHabit.time.count {
+                bottomTime = bottomHabit.time.last ?? ""
+            } else {
+                bottomTime = bottomHabit.time[bottomCount]
+            }
+            return topTime < bottomTime
             }), id: \.self) { habit in
                 HStack {
                     Text(habit.name)
@@ -406,9 +452,22 @@ struct MainList: View {
                 }
                 return false
             }).sorted(by: { topHabit, bottomHabit in
-                let topCount = topHabit.checkedInDays.first(where: {$0.date == date.convertToString()})?.count ?? 0
-                let bottomCount = bottomHabit.checkedInDays.first(where: {$0.date == date.convertToString()})?.count ?? 0
-                return topHabit.time[topCount] < bottomHabit.time[bottomCount]
+                let today = date.convertToString()
+                var topCount = topHabit.checkedInDays.first(where: {$0.date == today})?.count ?? 0
+                var bottomCount = bottomHabit.checkedInDays.first(where: {$0.date == today})?.count ?? 0
+            var topTime = ""
+            var bottomTime = ""
+            if topCount >= topHabit.time.count {
+                topTime = topHabit.time.last ?? ""
+            } else {
+                topTime = topHabit.time[topCount]
+            }
+            if bottomCount >= bottomHabit.time.count {
+                bottomTime = bottomHabit.time.last ?? ""
+            } else {
+                bottomTime = bottomHabit.time[bottomCount]
+            }
+            return topTime < bottomTime
             }), id: \.self) { habit in
                 HStack {
                     Text(habit.name)
